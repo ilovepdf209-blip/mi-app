@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "mi-app-4-julio"
+  },
+  "targets": {
+    "mi-app-4-julio": {
+      "hosting": {
+        "viajandojuntos4julio": [
+          "viajandojuntos4julio"
+        ]
+      }
+    }
+  }
+}

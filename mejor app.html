@@ -1,0 +1,2202 @@
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viajemos Juntos CO Prototipo SPA Completo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel for in-browser JSX transformation -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #4a5568;
+            border-radius: 10px;
+            border: 2px solid #0f172a;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, createContext, useContext, useMemo, useRef } = React;
+
+        // --- Iconos (Simulación de Lucide) ---
+        const MapPin = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+        const Clock = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+        const Sparkles = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/><path d="M5 5L6 7"/><path d="M18 5L17 7"/><path d="M19 18L18 16"/><path d="M6 18L7 16"/></svg>;
+        const Bell = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>;
+        const Banknote = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="12" x="2" y="6" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></svg>;
+        const Wallet = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4z"/></svg>;
+        const Leaf = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 4 13V8a5 5 0 0 1 5-5h1a5 5 0 0 1 5 5v1.23a7 7 0 0 1-6.91 6.76Z"/><path d="M17.5 8.5c.42 0 .83.21 1.09.59.26.37.26.87 0 1.24-.26.37-.67.59-1.09.59"/></svg>;
+        const DollarSign = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="2" x2="12" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>;
+        const Users = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
+        const RouteIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="19" r="3"></circle><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"></path><circle cx="18" cy="5" r="3"></circle></svg>;
+        const ArrowRight = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>;
+        const ChevronDown = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>;
+        const ChevronRight = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>;
+        const LogIn = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>);
+        const UserPlus = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>);
+        const Logout = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>);
+        const User = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>);
+        const Pencil = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>);
+        const Check = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>);
+        const X = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>);
+        const ShieldCheck = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>);
+        const Search = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>);
+        const Star = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>;
+        const Plus = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>);
+        const Minus = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>);
+        const MessageSquare = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>);
+        const Mail = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>);
+        const Facebook = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>);
+        const Twitter = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 1.4 3.3 4.9 3.3 4.9-6.1-1.4-6-6.4-6-6.4s-4.6 1.4-6.5 4.3c-.3 1.1.5 2.3-.5 3.4C8.3 21.6 3 19.3 3 19.3s-1.4-2.1.2-4.9c-.2 1.1-.5 2.3-.5 3.4C3 21.6 3 19.3 3 19.3s2.9-.6 4.9-1.9c-1.4 2.1.2 4.9-.2 4.9-1.4-2.1-4.9-1.9-4.9-1.9-2.1-1.4-4.9-.2-4.9.2-2.1 1.4.2 4.9 1.9 4.9 1.4 2.1 4.9.2 4.9-.2 1.4-2.1-.2-4.9-1.9-4.9s-4.9-.2-4.9.2c-2.1 1.4.2 4.9 1.9 4.9 1.4 2.1 4.9.2 4.9-.2 1.4-2.1-.2-4.9-1.9-4.9-1.4-2.1-4.9-1.9-4.9-1.9-2.1-1.4-4.9-.2-4.9.2-2.1 1.4.2 4.9 1.9 4.9 1.4 2.1 4.9.2 4.9-.2 1.4-2.1-.2-4.9-1.9-4.9s-4.9-.2-4.9.2c-2.1 1.4.2 4.9 1.9 4.9 1.4 2.1 4.9.2 4.9-.2 1.4-2.1-.2-4.9-1.9-4.9-1.4-2.1-4.9-1.9-4.9-1.9-2.1-1.4-4.9-.2-4.9.2C1.6 15 3 16.9 3 19.3c0 .4-.1.8-.2 1.2-.5 1.1-1.2 2.1-2.1 3-1.4 1.4-3.3 2.1-5.2 2.1-1.4 0-2.8-.3-4.1-.8-1.3-.5-2.5-1.2-3.6-2.1-1.1-.9-2.1-2-2.9-3.2-.8-1.2-1.5-2.5-2-3.8-.5-1.3-1-2.7-1.3-4.1-.3-1.4-.5-2.8-.5-4.2s.2-2.8.5-4.2.7-2.7 1.3-4.1c.5-1.3 1.2-2.5 2-3.8.8-1.2 1.8-2.3 2.9-3.2 1.1-.9 2.3-1.6 3.6-2.1 1.3-.5 2.7-.8 4.1-.8 1.9 0 3.8.3 5.5 1 1.8.7 3.4 1.7 4.9 2.9.2.2.3.4.4.6.1.2.2.5.2.7s-.1.5-.2.7c-.1.2-.3.4-.4.6s-.4.3-.6.5c-.2.1-.5.2-.7.3-.2.1-.5.1-.7.1h-.5c-1.1 0-2.1-.2-3.1-.6-.9-.4-1.8-1-2.5-1.7-.7-.7-1.3-1.5-1.7-2.5-.4-1-.6-2-.6-3.1s.2-2.1.6-3.1c.4-1 .9-1.8 1.7-2.5.7-.7 1.6-1.3 2.5-1.7 1-.4 2-.6 3.1-.6h.5c.2 0 .5.1.7.1s.5.1.7.3.4.3.6.5.3.4.4.6.2.5.2.7c0 .2-.1.5-.2.7-.1.2-.2.5-.4.6-.1.2-.3.4-.6.5-.2.1-.5.2-.7.3h-1.1c-1.1 0-2.1-.2-3.1-.6-.9-.4-1.8-1-2.5-1.7-.7-.7-1.3-1.5-1.7-2.5-.4-1-.6-2-.6-3.1s.2-2.1.6-3.1c.4-1 .9-1.8 1.7-2.5s1.6-1.3 2.5-1.7c1-.4 2-.6 3.1-.6h1.1c.2 0 .5.1.7.1s.5.1.7.3.4.3.6.5c.2.2.3.4.4.6.1.2.2.5.2.7s-.1.5-.2.7c-.1.2-.2.5-.4.6-.1.2-.3.4-.6.5-.2.1-.5.2-.7.3h-1.1c-1.1 0-2.1-.2-3.1-.6-.9-.4-1.8-1-2.5-1.7-.7-.7-1.3-1.5-1.7-2.5-.4-1-.6-2-.6-3.1s.2-2.1.6-3.1c.4-1 .9-1.8 1.7-2.5s1.6-1.3 2.5-1.7c1-.4 2-.6 3.1-.6h1.1c1.1 0 2.1.2 3.1.6.9.4 1.8 1 2.5 1.7.7.7 1.3 1.5 1.7 2.5.4 1 .6 2 .6 3.1z"/></svg>);
+        const Instagram = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>);
+        const Upload = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>);
+        const Car = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 16.5 17.5 13H22v-2h-4.5l-3.5 3.5"/><path d="M8 18H2v-2h6"/><path d="M10 18.5 14 13l-4-5.5H2v2h5.5l2 3-2.5 2.5"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="17" r="2"/></svg>);
+        const CreditCard = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>);
+        const CheckCircle = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>);
+        const BookUser = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><circle cx="12" cy="8" r="2"/><path d="M15 13a3 3 0 1 0-6 0"/></svg>);
+        const Briefcase = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>);
+        const LifeBuoy = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="4.93" y1="4.93" x2="9.17" y2="9.17"/><line x1="14.83" y1="14.83" x2="19.07" y2="19.07"/><line x1="14.83" y1="9.17" x2="19.07" y2="4.93"/><line x1="14.83" y1="9.17" x2="18.36" y2="5.64"/><line x1="4.93" y1="19.07" x2="9.17" y2="14.83"/></svg>;
+        const AppleLogo = (props) => (<svg {...props} viewBox="0 0 24 24" fill="currentColor"><path d="M17.6,3.2C16,2,14.2,2,12.9,2.1c-1.6,0-3.3,1-4.1,2.4c-1.6,2.7-0.5,6.6,1.4,8.8c0.9,1,2,1.6,3.2,1.6 c1.2,0,2.1-0.6,3.1-1.6c1.7-1.7,2.2-4.2,1.3-6.4C17.7,6.3,17.7,3.3,17.6,3.2z M13.1,11.5c-0.6,0.6-1.4,1-2.2,1 c-0.9,0-1.7-0.4-2.3-1.1c-1.2-1.3-1.6-3.2-1-4.8c0.6-1.5,2.1-2.5,3.7-2.5c0.1,0,0.2,0,0.3,0c1.4,0.1,2.6,1.1,3,2.4 C15.1,9.3,14.3,10.9,13.1,11.5z"/></svg>);
+        const Settings = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.73l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.73l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const Home = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
+        const ArrowUpDown = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg>;
+
+        // --- App Context for State Management ---
+        const AppContext = createContext();
+
+        const AppProvider = ({ children }) => {
+            const [page, setPage] = useState('home');
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [user, setUser] = useState(null);
+            const [isCorpLoggedIn, setIsCorpLoggedIn] = useState(false);
+            const [corpUser, setCorpUser] = useState(null);
+
+            const navigate = (newPage) => {
+                window.scrollTo(0, 0);
+                setPage(newPage);
+            };
+
+            const loginAsPassenger = () => {
+                setUser({ 
+                    role: 'passenger',
+                    name: 'Juan Pérez',
+                    email: 'juan.perez@example.com', 
+                    telefono: '+57 300 123 4567', 
+                    ciudad: 'Medellín, Antioquia', 
+                    descripcion: 'Soy una persona amigable y responsable. Me encanta viajar por Colombia y conocer gente nueva, escuchar música y conversar. ¡No fumador!', 
+                    avatarUrl: 'https://i.pravatar.cc/150?u=juan.perez@example.com', 
+                    miembroDesde: 'Enero 2024',
+                    stats: {
+                        created: 12,
+                        completed: 10
+                    },
+                    wallet: {
+                        balance: 50000
+                    }
+                });
+                setIsLoggedIn(true);
+                navigate('home');
+            };
+            
+             const loginAsDriver = () => {
+                setUser({ 
+                    role: 'driver',
+                    name: 'Ana Rodriguez',
+                    email: 'ana.rodriguez@example.com', 
+                    telefono: '+57 321 765 4321', 
+                    ciudad: 'Envigado, Antioquia', 
+                    descripcion: 'Conductora experimentada con más de 5 años en carretera. Me gusta la puntualidad, la buena música y un viaje tranquilo y seguro para todos.', 
+                    avatarUrl: 'https://i.pravatar.cc/150?u=ana.rodriguez@example.com', 
+                    miembroDesde: 'Marzo 2022',
+                    stats: {
+                        created: 152,
+                        completed: 148
+                    },
+                    vehicle: {
+                        make: 'Chevrolet',
+                        model: 'Onix',
+                        year: '2023',
+                        version: '1.0 Turbo',
+                        fuelType: 'Gasolina',
+                        consumption: 18.5, // km/L
+                        plate: 'JSN-458',
+                        color: 'Gris Plata',
+                        features: ['Aire Acondicionado', 'Mascotas Permitidas', 'Asientos de Cuero']
+                    },
+                    wallet: {
+                        balance: 750000,
+                        totalEarnings: 3200000
+                    }
+                });
+                setIsLoggedIn(true);
+                navigate('home');
+            };
+            
+            const loginAsCorp = () => {
+                setCorpUser({
+                    name: 'Tu Empresa S.A.S',
+                    email: 'sostenibilidad@tuempresa.co',
+                });
+                setIsCorpLoggedIn(true);
+                navigate('corporate-dashboard');
+            };
+            
+            const loginWithGoogle = () => {
+                 setUser({ 
+                    role: 'passenger',
+                    name: 'Maria Garcia',
+                    email: 'maria.garcia@gmail.com',
+                    telefono: '+57 311 222 3344',
+                    ciudad: 'Bogotá, D.C.',
+                    descripcion: 'Viajera entusiasta y amante de la naturaleza. ¡Lista para la próxima aventura!',
+                    avatarUrl: 'https://i.pravatar.cc/150?u=maria.garcia@gmail.com',
+                    miembroDesde: 'Junio 2025',
+                    stats: {
+                        created: 5,
+                        completed: 4
+                    },
+                    wallet: {
+                        balance: 25000
+                    }
+                });
+                setIsLoggedIn(true);
+                navigate('home');
+            }
+
+            const logout = () => {
+                setUser(null);
+                setIsLoggedIn(false);
+                setCorpUser(null);
+                setIsCorpLoggedIn(false);
+                navigate('home');
+            };
+
+            const value = { page, navigate, isLoggedIn, user, setUser, isCorpLoggedIn, corpUser, loginAsPassenger, loginAsDriver, logout, loginWithGoogle, loginAsCorp };
+
+            return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+        };
+
+        const useApp = () => useContext(AppContext);
+
+        // --- Componentes UI ---
+        const ActionButton = ({ children, className, ...props }) => (
+            <button 
+              className={`font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 ${className}`}
+              {...props}
+            >
+              {children}
+            </button>
+        );
+        
+        // --- Datos ---
+        const locations = [
+          { name: 'Bogotá, D.C.', lat: 4.7110, lon: -74.0721 },
+          { name: 'Medellín, Antioquia', lat: 6.2476, lon: -75.5658 },
+          { name: 'Cali, Valle del Cauca', lat: 3.4516, lon: -76.5320 },
+          { name: 'Barranquilla, Atlántico', lat: 10.9639, lon: -74.7964 },
+          { name: 'Cartagena, Bolívar', lat: 10.3910, lon: -75.4794 },
+          { name: 'Cúcuta, Norte de Santander', lat: 7.8939, lon: -72.5078 },
+          { name: 'Bucaramanga, Santander', lat: 7.1193, lon: -73.1227 },
+          { name: 'Pereira, Risaralda', lat: 4.8133, lon: -75.6961 },
+          { name: 'Santa Marta, Magdalena', lat: 11.2408, lon: -74.1990 },
+          { name: 'Ibagué, Tolima', lat: 4.4389, lon: -75.2322 },
+          { name: 'Pasto, Nariño', lat: 1.2136, lon: -77.2811 },
+          { name: 'Manizales, Caldas', lat: 5.0689, lon: -75.5174 },
+          { name: 'Neiva, Huila', lat: 2.9273, lon: -75.2819 },
+          { name: 'Villavicencio, Meta', lat: 4.1420, lon: -73.6266 },
+          { name: 'Aeropuerto El Dorado (BOG), Bogotá', lat: 4.7016, lon: -74.1469 },
+          { name: 'Aeropuerto José María Córdova (MDE), Rionegro', lat: 6.1645, lon: -75.4231 },
+          { name: 'Aeropuerto Alfonso Bonilla Aragón (CLO), Cali', lat: 3.5432, lon: -76.3816 },
+          { name: 'Aeropuerto Rafael Núñez (CTG), Cartagena', lat: 10.4424, lon: -75.5131 },
+        ];
+        
+        // --- Funciones Utilitarias ---
+        function getDistance(lat1, lon1, lat2, lon2) {
+          const R = 6371; // Radio de la tierra en km
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          const d = R * c; // Distancia en km
+          return Math.round(d);
+        }
+
+        // --- Componentes de Layout ---
+        const AppHeader = () => {
+            const { navigate, isLoggedIn, user, logout } = useApp();
+
+            const handlePublishClick = () => {
+              if (isLoggedIn && user && user.role === 'driver') {
+                navigate('publish-trip');
+              } else if (isLoggedIn) {
+                alert('Esta función es solo para conductores. Por favor, inicia sesión con una cuenta de conductor.');
+              }
+              else {
+                alert('Debes iniciar sesión como conductor para publicar un viaje.');
+                navigate('login');
+              }
+            };
+
+            return (
+                <header className="absolute top-0 left-0 right-0 z-50">
+                    <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+                        <a href="#" onClick={(e) => { e.preventDefault(); navigate('home'); }} className="text-2xl font-bold text-white flex items-center gap-3 cursor-pointer">
+                            <span className="text-3xl">🚗</span>
+                            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent hidden sm:block">Viajemos Juntos CO</span>
+                        </a>
+                        <div className="hidden md:flex items-center space-x-6 text-sm font-medium text-white/80">
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('search'); }} className="hover:text-white transition-colors">Buscar Viaje</a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); handlePublishClick(); }} className="hover:text-white transition-colors">Publicar Viaje</a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('how-it-works'); }} className="hover:text-white transition-colors">¿Cómo funciona?</a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('sustainable-travel'); }} className="hover:text-white transition-colors">Viaja Sostenible</a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('security'); }} className="hover:text-white transition-colors">Seguridad</a>
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('corporate-login'); }} className="hover:text-white transition-colors">Portal Empresas</a>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            {isLoggedIn ? (
+                                <>
+                                    <button onClick={() => navigate(user.role === 'driver' ? 'driver-profile' : 'passenger-profile')} className="hidden sm:flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/20 text-white/80 font-semibold py-2 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                                        <User className="w-4 h-4" /> Perfil
+                                    </button>
+                                    <button onClick={logout} className="flex items-center gap-2 bg-red-500/20 text-red-400 font-semibold py-2 px-4 rounded-lg hover:bg-red-500/30 transition-all duration-300 transform hover:scale-105">
+                                        <Logout className="w-4 h-4" /> <span className="hidden sm:inline">Salir</span>
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button onClick={() => navigate('login')} className="hidden sm:flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/20 text-white/80 font-semibold py-2 px-4 rounded-lg hover:bg-white/10 transition-all duration-300 transform hover:scale-105">
+                                        <LogIn className="w-4 h-4" /> Iniciar Sesión
+                                    </button>
+                                    <ActionButton onClick={() => navigate('register')} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 px-4">
+                                        <UserPlus className="w-4 h-4" /> Registrarse
+                                    </ActionButton>
+                                </>
+                            )}
+                        </div>
+                    </nav>
+                </header>
+            );
+        };
+
+        const AppFooter = () => {
+            const { navigate } = useApp();
+            return (
+                <footer className="relative z-10 bg-slate-900/50 border-t border-white/10 mt-20">
+                    <div className="max-w-7xl mx-auto px-6 py-12">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {/* Sobre Nosotros */}
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-white">Sobre Nosotros / La Compañía</h3>
+                                <ul className="space-y-2 text-white/60 text-sm">
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('about-us'); }} className="hover:text-white transition-colors">Quiénes somos</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('how-it-works'); }} className="hover:text-white transition-colors">¿Cómo funciona?</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('blog'); }} className="hover:text-white transition-colors">Blog / Noticias</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('mission'); }} className="hover:text-white transition-colors">Misión: Conectando comunidades</a></li>
+                                </ul>
+                            </div>
+                            {/* Ayuda y Soporte */}
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-white">Ayuda y Soporte</h3>
+                                <ul className="space-y-2 text-white/60 text-sm">
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('faq'); }} className="hover:text-white transition-colors">Preguntas Frecuentes (FAQ)</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('help-center'); }} className="hover:text-white transition-colors">¿Cómo podemos ayudarte?</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('contact'); }} className="hover:text-white transition-colors">Contacto</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('security'); }} className="hover:text-white transition-colors">Seguridad</a></li>
+                                </ul>
+                            </div>
+                            {/* Legal y Privacidad */}
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-white">Legal y Privacidad</h3>
+                                <ul className="space-y-2 text-white/60 text-sm">
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('terms'); }} className="hover:text-white transition-colors">Términos y condiciones</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('privacy'); }} className="hover:text-white transition-colors">Política de privacidad</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('legal'); }} className="hover:text-white transition-colors">Avisos legales</a></li>
+                                    <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('cookies'); }} className="hover:text-white transition-colors">Política de cookies</a></li>
+                                </ul>
+                            </div>
+                            {/* Síguenos / Conéctate */}
+                            <div className="space-y-4">
+                                <h3 className="font-semibold text-white">Síguenos / Conéctate</h3>
+                                <div className="flex space-x-4">
+                                    <a href="#" className="text-white/60 hover:text-white transition-colors"><Facebook className="w-6 h-6"/></a>
+                                    <a href="#" onClick={(e) => { e.preventDefault(); navigate('contact'); }} className="hover:text-white transition-colors"><Twitter className="w-6 h-6"/></a>
+                                    <a href="#" className="text-white/60 hover:text-white transition-colors"><Instagram className="w-6 h-6"/></a>
+                                </div>
+                                <p className="text-sm text-white/60">Suscríbete a nuestro boletín para recibir novedades.</p>
+                                <form className="flex">
+                                    <input type="email" placeholder="Tu correo electrónico" className="w-full bg-slate-700/50 border border-slate-600 rounded-l-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition text-sm"/>
+                                    <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-r-lg transition-colors">Suscribirse</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div className="mt-12 border-t border-white/10 pt-8 text-center text-sm text-white/50">
+                            <p>&copy; {new Date().getFullYear()} Viajemos Juntos CO. Todos los derechos reservados.</p>
+                            <p>Hecho con ❤️ en el Mundo. v2.1.0</p>
+                        </div>
+                    </div>
+                </footer>
+            );
+        };
+
+        const AnimatedBackground = () => {
+            const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+            useEffect(() => {
+                const handleMouseMove = (e) => {
+                    setMousePosition({ x: e.clientX, y: e.clientY });
+                };
+                window.addEventListener('mousemove', handleMouseMove);
+                return () => {
+                    window.removeEventListener('mousemove', handleMouseMove);
+                };
+            }, []);
+
+            const spotlightStyle = {
+                background: `radial-gradient(circle 300px at ${mousePosition.x}px ${mousePosition.y}px, rgba(255, 255, 255, 0.05), transparent 80%)`,
+            };
+
+            return (
+                <div className="fixed inset-0 z-0 pointer-events-none">
+                    <div className="absolute inset-0 transition-opacity duration-300" style={spotlightStyle}></div>
+                    <div
+                        className="absolute w-96 h-96 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-full blur-3xl transition-transform duration-1000 ease-out opacity-50"
+                        style={{ transform: `translate(${mousePosition.x / 50}px, ${mousePosition.y / 50}px)` }}
+                    ></div>
+                    <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse [animation-duration:10s] opacity-50"></div>
+                    <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-bounce [animation-duration:12s] opacity-50"></div>
+                </div>
+            );
+        };
+
+        // --- Page Components ---
+        const HomePage = () => {
+            const { navigate, user, isLoggedIn } = useApp();
+             const handlePublishClick = () => {
+              if (isLoggedIn && user && user.role === 'driver') {
+                navigate('publish-trip');
+              } else if (isLoggedIn) {
+                alert('Esta función es solo para conductores.');
+              } else {
+                alert('Debes iniciar sesión como conductor para publicar un viaje.');
+                navigate('login');
+              }
+            };
+            const heroCards = [
+                { id: 1, title: "Ahorra en cada Viaje", description: "Comparte los gastos de tu viaje, desde el combustible hasta los peajes.", icon: <DollarSign className="w-8 h-8" />, gradient: "from-emerald-400 via-teal-500 to-cyan-600", shadowColor: "shadow-emerald-500/25", buttonText: "Descubre cómo", action: () => navigate('how-it-works'), stats: { number: "70%", label: "Ahorro promedio" } },
+                { id: 2, title: "Conecta y Comparte", description: "Encuentra compañeros de ruta para tus trayectos habituales o esas aventuras de fin de semana.", icon: <Users className="w-8 h-8" />, gradient: "from-purple-500 via-violet-600 to-indigo-700", shadowColor: "shadow-purple-500/25", buttonText: "Encuentra Viajes", action: () => navigate('search'), stats: { number: "15K+", label: "Usuarios" } },
+                { id: 3, title: "Publica tu Viaje", description: "Publica los asientos libres de tu coche y cubre tus gastos de gasolina y peajes.", icon: <RouteIcon className="w-8 h-8" />, gradient: "from-blue-500 via-indigo-600 to-purple-700", shadowColor: "shadow-blue-500/25", buttonText: "Publica Ahora", action: handlePublishClick, stats: { number: "2min", label: "Para publicar" }  },
+            ];
+             const popularRoutes = [
+                { from: 'Bogotá', to: 'Medellín', img: 'https://images.unsplash.com/photo-1612294037193-a003c401562b?q=80&w=2070&auto=format&fit=crop', price: '90.000' },
+                { from: 'Cali', to: 'Bogotá', img: 'https://images.unsplash.com/photo-1596222765322-553b313b8b6a?q=80&w=2070&auto=format&fit=crop', price: '110.000' },
+                { from: 'Cartagena', to: 'Santa Marta', img: 'https://images.unsplash.com/photo-1586948834241-731b32a76b78?q=80&w=2070&auto=format&fit=crop', price: '45.000' },
+                { from: 'Bucaramanga', to: 'Cúcuta', img: 'https://images.unsplash.com/photo-1616790473204-18798514d347?q=80&w=1974&auto=format&fit=crop', price: '55.000' },
+            ];
+            return (
+                <div className="relative z-10">
+                    <div className="pt-32 pb-12">
+                        <div className="max-w-7xl mx-auto px-6">
+                            <div className="text-center mb-16">
+                                <h1 className="text-5xl md:text-7xl font-extrabold mb-6 bg-gradient-to-r from-white via-slate-200 to-blue-300 bg-clip-text text-transparent tracking-tight">
+                                    Simplificamos tus<br />
+                                    <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                                        viajes compartidos
+                                    </span>
+                                </h1>
+                                <p className="text-lg md:text-xl text-white/60 max-w-3xl mx-auto leading-relaxed">
+                                    Una plataforma segura, económica y amigable con el medio ambiente, diseñada para conectar personas y destinos de manera inteligente.
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mb-24">
+                                {heroCards.map((card) => (
+                                    <div key={card.id} className="group relative overflow-hidden border border-white/10 bg-white/5 backdrop-blur-lg shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 rounded-2xl">
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-2xl`} />
+                                        <div className="absolute inset-[1px] bg-slate-800/50 rounded-2xl" />
+                                        <div className="p-6 sm:p-8 relative z-10">
+                                            <div className="flex items-start justify-between mb-6">
+                                                <div className={`p-3.5 rounded-xl bg-gradient-to-br ${card.gradient} shadow-lg group-hover:scale-110 transition-transform duration-500`}>
+                                                    <div className="text-white">{card.icon}</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-2xl font-bold text-white mb-1">{card.stats.number}</div>
+                                                    <div className="text-xs text-white/60 font-medium uppercase tracking-wider">{card.stats.label}</div>
+                                                </div>
+                                            </div>
+                                            <div className="mb-6">
+                                                <h3 className="text-2xl font-bold text-white mb-4">{card.title}</h3>
+                                                <p className="text-white/70 leading-relaxed text-sm h-10">{card.description}</p>
+                                            </div>
+                                            <ActionButton onClick={card.action} className={`w-full bg-gradient-to-r ${card.gradient} text-white border-0 ${card.shadowColor} hover:shadow-xl group-hover:shadow-lg`}>
+                                                {card.buttonText}<ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                            </ActionButton>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                     {/* New Action Cards Section */}
+                    <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-8 my-20">
+                        {/* Card 1: Publish */}
+                        <div className="bg-slate-800/50 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row items-center">
+                           <div className="p-8 flex-1">
+                             <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-3">Ahorra compartiendo los gastos de tu viaje</h3>
+                             <p className="text-white/70 mb-6">Publica los asientos libres de tu coche y cubre tus gastos de gasolina y peajes. Es fácil, rápido y seguro.</p>
+                             <ActionButton onClick={handlePublishClick} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">Publicar mi viaje ahora</ActionButton>
+                           </div>
+                           <img src="https://images.unsplash.com/photo-1533560699268-45607a710185?q=80&w=1974&auto=format&fit=crop" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/0f172a/e2e8f0?text=Auto+en+carretera'; }} className="w-full md:w-1/3 h-48 md:h-full object-cover"/>
+                        </div>
+                        {/* Card 2: Discover */}
+                        <div className="bg-slate-800/50 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row items-center">
+                            <img src="https://images.unsplash.com/photo-1618828232320-746979245136?q=80&w=1964&auto=format&fit=crop" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/0f172a/e2e8f0?text=Paisaje+colombiano'; }} className="w-full md:w-1/3 h-48 md:h-full object-cover"/>
+                           <div className="p-8 flex-1">
+                             <h3 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-3">Descubre Colombia, asiento a asiento</h3>
+                             <p className="text-white/70 mb-6">Desde la montaña hasta la costa, encuentra viajes a millas de destinos. Conoce gente nueva y explora el país de una forma económica y sostenible.</p>
+                             <ActionButton onClick={() => navigate('search')} className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">Encontrar un viaje</ActionButton>
+                           </div>
+                        </div>
+                    </div>
+                     {/* Sustainable Section */}
+                    <div className="max-w-7xl mx-auto px-6 my-24">
+                         <div className="relative bg-slate-800/50 border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-12 overflow-hidden grid md:grid-cols-2 gap-8 items-center">
+                              <div className="relative z-10">
+                                <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl inline-block mb-4">
+                                    <Leaf className="w-8 h-8 text-white"/>
+                                </div>
+                                <h2 className="text-4xl font-extrabold text-white mb-4">Reduce tu Huella de Carbono, Viaje a Viaje</h2>
+                                <p className="text-white/70 leading-relaxed mb-6">Cada vez que compartes un viaje, no solo ahorras dinero, sino que contribuyes a un planeta más saludable. Menos coches en la carretera significan menos emisiones, menos tráfico y más espacios verdes para todos.</p>
+                                <ActionButton onClick={() => navigate('sustainable-travel')} className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                                    Aprende más <ArrowRight className="w-5 h-5"/>
+                                </ActionButton>
+                              </div>
+                              <div className="hidden md:block">
+                                <img src="https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=2070&auto=format&fit=crop" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/0f172a/e2e8f0?text=Naturaleza'; }} className="rounded-xl w-full h-full object-cover opacity-30"/>
+                              </div>
+                         </div>
+                    </div>
+                    {/* Popular Routes Section */}
+                    <div className="max-w-7xl mx-auto px-6 mt-24 mb-12">
+                         <h2 className="text-4xl font-extrabold text-center text-white mb-12">Rutas Populares</h2>
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                            {popularRoutes.map(route => (
+                                <div key={route.from + route.to} className="group relative overflow-hidden rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                                    <img src={route.img} onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/400x600/0f172a/e2e8f0?text=Ruta+Popular'; }} alt={`Viaje de ${route.from} a ${route.to}`} className="w-full h-80 object-cover group-hover:scale-105 transition-transform duration-500"/>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                    <div className="absolute bottom-0 left-0 p-6">
+                                        <h3 className="text-2xl font-bold text-white">{route.from} → {route.to}</h3>
+                                        <p className="text-white/80 text-sm mt-1">Desde ${route.price} COP</p>
+                                    </div>
+                                </div>
+                            ))}
+                         </div>
+                    </div>
+                </div>
+            )
+        };
+
+        const LoginPage = () => {
+            const { navigate, loginAsPassenger, loginAsDriver } = useApp();
+            return (
+                <div className="relative z-10 pt-32 pb-20 flex items-center justify-center min-h-screen">
+                    <div className="w-full max-w-md mx-auto px-4">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                            <h2 className="text-3xl font-bold text-center text-white mb-2">Bienvenido de Vuelta</h2>
+                            <p className="text-center text-white/60 mb-8">Inicia sesión para continuar tu viaje.</p>
+                            <div className="space-y-4">
+                               <ActionButton onClick={loginAsPassenger} className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white">
+                                   <Users className="w-5 h-5" /> Iniciar como Pasajero (Demo)
+                               </ActionButton>
+                               <ActionButton onClick={loginAsDriver} className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                                  <Car className="w-5 h-5" /> Iniciar como Conductor (Demo)
+                               </ActionButton>
+                            </div>
+                             <div className="relative flex py-5 items-center">
+                                <div className="flex-grow border-t border-slate-600"></div>
+                                <span className="flex-shrink mx-4 text-slate-400 text-xs">O USA TU CORREO</span>
+                                <div className="flex-grow border-t border-slate-600"></div>
+                            </div>
+                            <form className="space-y-4">
+                                <div><label className="text-sm font-medium text-white/70">Correo Electrónico</label><input type="email" name="email" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" defaultValue="user@example.com" /></div>
+                                <div><label className="text-sm font-medium text-white/70">Contraseña</label><input type="password" name="password" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" defaultValue="password123"/></div>
+                                <ActionButton type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white mt-4">Iniciar Sesión</ActionButton>
+                                <p className="text-sm text-center text-white/50">¿No tienes cuenta? <a href="#" onClick={(e) => { e.preventDefault(); navigate('register')}} className="font-semibold text-purple-400 hover:text-purple-300">Regístrate</a></p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const RegisterPage = () => {
+            const { navigate } = useApp();
+            return (
+                <div className="relative z-10 pt-32 pb-20 flex items-center justify-center min-h-screen">
+                    <div className="w-full max-w-md mx-auto px-4">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                            <h2 className="text-3xl font-bold text-center text-white mb-2">Crea tu Cuenta</h2>
+                            <p className="text-center text-white/60 mb-8">Únete a la comunidad de viajeros más grande.</p>
+                            <div className="space-y-4">
+                                <ActionButton onClick={() => navigate('passenger-register')} className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white">
+                                  <Users className="w-5 h-5" /> Registrarme como Pasajero
+                                </ActionButton>
+                                <ActionButton onClick={() => navigate('driver-register')} className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                                  <Car className="w-5 h-5" /> Registrarme como Conductor
+                                </ActionButton>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )
+        };
+
+        const PassengerRegisterPage = () => {
+            const { navigate, loginWithGoogle } = useApp();
+            return (
+                <div className="relative z-10 pt-32 pb-20 flex items-center justify-center min-h-screen">
+                    <div className="w-full max-w-md mx-auto px-4">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                            <h2 className="text-3xl font-bold text-center text-white mb-2">Crear Cuenta de Pasajero</h2>
+                            <p className="text-center text-white/60 mb-8">Completa tus datos para empezar a viajar.</p>
+                            
+                            <div className="space-y-4 mb-6">
+                                <button onClick={loginWithGoogle} className="w-full bg-white text-gray-800 font-semibold py-2.5 rounded-lg shadow-md hover:bg-gray-200 transition-all duration-300 flex items-center justify-center gap-3"><svg className="w-5 h-5" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C41.38,36.142,44,30.638,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg> Continuar con Google</button>
+                                <button className="w-full bg-black text-white font-semibold py-2.5 rounded-lg shadow-md hover:bg-gray-800 transition-all duration-300 flex items-center justify-center gap-3">
+                                  <AppleLogo className="w-5 h-5"/> Continuar con Apple
+                                </button>
+                            </div>
+                             <div className="relative flex py-5 items-center">
+                                <div className="flex-grow border-t border-slate-600"></div>
+                                <span className="flex-shrink mx-4 text-slate-400 text-xs">O REGÍSTRATE CON CORREO</span>
+                                <div className="flex-grow border-t border-slate-600"></div>
+                            </div>
+
+                            <form onSubmit={(e) => { e.preventDefault(); alert("Usuario pasajero registrado (simulado)"); navigate('login'); }} className="space-y-4">
+                                <div><label className="text-sm font-medium text-white/70">Nombre completo</label><input type="text" name="name" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                <div><label className="text-sm font-medium text-white/70">Correo Electrónico</label><input type="email" name="email" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                <div><label className="text-sm font-medium text-white/70">Contraseña</label><input type="password" name="password" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                <div><label className="text-sm font-medium text-white/70">Confirmar contraseña</label><input type="password" name="confirmPassword" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                <ActionButton type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white mt-6">Crear Cuenta</ActionButton>
+                                <p className="text-sm text-center text-white/50">¿Ya tienes cuenta? <a href="#" onClick={(e) => { e.preventDefault(); navigate('login')}} className="font-semibold text-purple-400 hover:text-purple-300">Inicia Sesión</a></p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const DriverRegisterPage = () => {
+            const { navigate } = useApp();
+            const [step, setStep] = useState(1);
+            
+            const cities = ["Medellín", "Bello", "Itagüí", "Envigado", "Sabaneta", "Rionegro", "La Ceja", "Caldas", "Copacabana", "Girardota"];
+            
+            const vehicleData = {
+                "Chevrolet": [
+                    { name: "Onix", versions: ["Turbo", "RS", "Premier"], fuel: "Gasolina", consumption: 18.5 },
+                    { name: "Spark", versions: ["Life", "GT", "Activ"], fuel: "Gasolina", consumption: 17.0 },
+                    { name: "Sail", versions: ["LS", "LTZ"], fuel: "Gasolina", consumption: 16.5 },
+                ],
+                "Renault": [
+                    { name: "Kwid", versions: ["Zen", "Intens", "Outsider"], fuel: "Gasolina", consumption: 20.0 },
+                    { name: "Sandero", versions: ["Life", "Zen", "Stepway"], fuel: "Gasolina", consumption: 15.0 },
+                    { name: "Duster", versions: ["Zen", "Intens", "Iconic"], fuel: "Gasolina", consumption: 13.5 },
+                ],
+                "Mazda": [
+                    { name: "Mazda 2", versions: ["Touring", "Grand Touring"], fuel: "Gasolina", consumption: 19.0 },
+                    { name: "Mazda 3", versions: ["Prime", "Touring", "Grand Touring"], fuel: "Gasolina", consumption: 16.0 },
+                    { name: "CX-30", versions: ["Prime", "Touring", "Grand Touring LX"], fuel: "Gasolina", consumption: 14.5 },
+                ],
+                 "Toyota": [
+                    { name: "Corolla", versions: ["XLi", "GLi", "Hybrid"], fuel: "Híbrido", consumption: 22.0 },
+                    { name: "RAV4", versions: ["XLE", "Limited", "Hybrid"], fuel: "Híbrido", consumption: 20.0 },
+                ],
+                 "Ford": [
+                    { name: "Ranger", versions: ["XL", "XLT", "Limited"], fuel: "Diesel", consumption: 12.0 },
+                    { name: "F-150", versions: ["Lariat", "Platinum", "Raptor"], fuel: "Gasolina", consumption: 9.0 },
+                ],
+                 "Volkswagen": [
+                     { name: "Jetta", versions: ["Comfortline", "Highline", "GLI"], fuel: "Gasolina", consumption: 15.0 },
+                     { name: "T-Cross", versions: ["Trendline", "Comfortline", "Highline"], fuel: "Gasolina", consumption: 16.5 },
+                ],
+                "Nissan": [
+                    { name: "Frontier", versions: ["S", "SE", "Platinum"], fuel: "Diesel", consumption: 13.0 },
+                    { name: "Kicks", versions: ["Sense", "Advance", "Exclusive"], fuel: "Gasolina", consumption: 17.5 },
+                ],
+                "Kia": [
+                     { name: "Picanto", versions: ["Ion", "GT-Line", "X-Line"], fuel: "Gasolina", consumption: 19.5 },
+                     { name: "Rio", versions: ["Vibrant", "Zenith"], fuel: "Gasolina", consumption: 18.0 },
+                ],
+                 "Hyundai": [
+                    { name: "Tucson", versions: ["Prestige", "Limited"], fuel: "Gasolina", consumption: 13.0 },
+                    { name: "Creta", versions: ["Attitude", "Premium"], fuel: "Gasolina", consumption: 15.5 },
+                ],
+                 "Suzuki": [
+                    { name: "Swift", versions: ["GL", "GLX", "Hybrid"], fuel: "Híbrido", consumption: 23.0 },
+                    { name: "Vitara", versions: ["GL", "GLX", "AllGrip"], fuel: "Gasolina", consumption: 16.0 },
+                ],
+            };
+            const fuelTypes = ["Gasolina", "Diesel", "Eléctrico", "Híbrido", "GNV", "GLP"];
+            const years = Array.from({length: 26}, (_, i) => 2025 - i);
+
+            const [selectedBrand, setSelectedBrand] = useState(Object.keys(vehicleData)[0]);
+            const [selectedModel, setSelectedModel] = useState('');
+            const [selectedVersionData, setSelectedVersionData] = useState(null);
+            
+            useEffect(() => {
+                 setSelectedModel('');
+                 setSelectedVersionData(null);
+            }, [selectedBrand]);
+
+            const handleModelChange = (e) => {
+                setSelectedModel(e.target.value);
+                setSelectedVersionData(null);
+            };
+
+            const handleVersionChange = (e) => {
+                const version = e.target.value;
+                const modelData = vehicleData[selectedBrand].find(m => m.name === selectedModel);
+                if (modelData) {
+                    setSelectedVersionData({
+                        version: version,
+                        fuel: modelData.fuel,
+                        consumption: modelData.consumption
+                    });
+                }
+            };
+
+            const nextStep = () => setStep(s => Math.min(s + 1, 3));
+            const prevStep = () => setStep(s => Math.max(s - 1, 1));
+
+            const handleFileChange = (e) => {
+              const file = e.target.files[0];
+              if(file) {
+                document.getElementById(`${e.target.name}-label`).textContent = file.name;
+              }
+            };
+
+            const progress = (step / 3) * 100;
+            
+            return (
+                <div className="relative min-h-screen flex items-center justify-center pt-24 pb-12 px-4">
+                  <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+                    <div className="hidden lg:block relative">
+                        <img src="https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=2070&auto=format&fit=crop" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x800/0f172a/e2e8f0?text=Casa'; }} className="w-full h-full object-cover"/>
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
+                         <div className="absolute bottom-8 left-8 text-white">
+                            <h2 className="text-4xl font-bold">Conviértete en Conductor</h2>
+                            <p className="text-white/70 mt-2 max-w-md">Únete a nuestra comunidad y empieza a generar ingresos compartiendo tus viajes.</p>
+                        </div>
+                    </div>
+
+                    <div className="p-8">
+                       <h2 className="text-3xl font-bold text-center text-white mb-2">Registro de Conductor</h2>
+                       
+                       {/* Progress Bar */}
+                       <div className="my-8">
+                          <div className="relative h-2 bg-slate-700 rounded-full">
+                            <div className="absolute top-0 left-0 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500" style={{width: `${progress}%`}}></div>
+                          </div>
+                          <div className="flex justify-between text-xs text-white/50 mt-2">
+                            <span className={step >= 1 ? 'text-purple-400 font-bold' : ''}>Info Personal</span>
+                            <span className={step >= 2 ? 'text-purple-400 font-bold' : ''}>Vehículo</span>
+                            <span className={step >= 3 ? 'text-purple-400 font-bold' : ''}>Documentos</span>
+                          </div>
+                       </div>
+                        
+                        <form onSubmit={(e) => e.preventDefault()}>
+                            {/* Step 1: Personal Info */}
+                            {step === 1 && (
+                                <div className="space-y-4 animate-fade-in">
+                                    <h3 className="text-xl font-semibold text-white/90">Paso 1: Cuéntanos sobre ti</h3>
+                                    <div><label className="text-sm font-medium text-white/70">Número de celular</label><input type="tel" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                      <div><label className="text-sm font-medium text-white/70">Nombres</label><input type="text" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                      <div><label className="text-sm font-medium text-white/70">Apellidos</label><input type="text" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                    </div>
+                                    <div><label className="text-sm font-medium text-white/70">Cédula de ciudadanía</label><input type="text" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                                    <div>
+                                        <label className="text-sm font-medium text-white/70">Ciudad de registro</label>
+                                        <input list="cities" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                        <datalist id="cities">
+                                            {cities.map(city => <option key={city} value={city} />)}
+                                        </datalist>
+                                    </div>
+                                    <div className="pt-4 flex justify-end">
+                                      <ActionButton onClick={nextStep} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">Siguiente</ActionButton>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Step 2: Vehicle Info */}
+                            {step === 2 && (
+                                <div className="space-y-4 animate-fade-in">
+                                    <h3 className="text-xl font-semibold text-white/90">Paso 2: Datos de tu vehículo</h3>
+                                     <div className="grid md:grid-cols-2 gap-4">
+                                         <div>
+                                            <label className="text-sm font-medium text-white/70">Marca</label>
+                                            <select onChange={(e) => setSelectedBrand(e.target.value)} value={selectedBrand} className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                                {Object.keys(vehicleData).map(brand => <option key={brand} value={brand}>{brand}</option>)}
+                                            </select>
+                                        </div>
+                                         <div>
+                                            <label className="text-sm font-medium text-white/70">Año</label>
+                                            <select required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                                {years.map(year => <option key={year} value={year}>{year}</option>)}
+                                            </select>
+                                        </div>
+                                     </div>
+                                      <div className="grid md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm font-medium text-white/70">Modelo</label>
+                                            <select onChange={handleModelChange} value={selectedModel} required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                                <option value="" disabled>Selecciona un modelo</option>
+                                                {vehicleData[selectedBrand].map(model => <option key={model.name} value={model.name}>{model.name}</option>)}
+                                            </select>
+                                        </div>
+                                         <div>
+                                            <label className="text-sm font-medium text-white/70">Versión</label>
+                                            <select required onChange={handleVersionChange} className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" disabled={!selectedModel}>
+                                                <option value="" disabled>Selecciona una versión</option>
+                                                {selectedModel && vehicleData[selectedBrand].find(m => m.name === selectedModel)?.versions.map(version => (
+                                                    <option key={version} value={version}>{version}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium text-white/70">Tipo de Combustible</label>
+                                        <select required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition">
+                                             <option value="" disabled>Selecciona un tipo</option>
+                                            {fuelTypes.map(fuel => <option key={fuel} value={fuel}>{fuel}</option>)}
+                                        </select>
+                                    </div>
+                                    
+                                     {selectedVersionData && (
+                                        <div className="bg-slate-700/50 p-4 rounded-lg text-sm">
+                                            <p className="font-semibold text-white">Datos del fabricante:</p>
+                                            <p>Consumo Homologado: <span className="font-bold text-purple-300">{selectedVersionData.consumption} km/galón</span></p>
+                                            <p>Tipo de Combustible: <span className="font-bold text-purple-300">{selectedVersionData.fuel}</span></p>
+                                        </div>
+                                    )}
+
+                                    <div className="pt-4 flex justify-between">
+                                      <ActionButton onClick={prevStep} type="button" className="bg-white/10 backdrop-blur-md border border-white/20 text-white/80 hover:bg-white/20">Anterior</ActionButton>
+                                      <ActionButton onClick={nextStep} type="button" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">Siguiente</ActionButton>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Step 3: Documents */}
+                            {step === 3 && (
+                                <div className="space-y-4 animate-fade-in">
+                                    <h3 className="text-xl font-semibold text-white/90">Paso 3: Documentación</h3>
+                                     <div className="grid sm:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">Licencia de Conducción</label>
+                                            <label htmlFor="licencia" className="w-full bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg py-2 px-3 flex items-center justify-center gap-2 cursor-pointer hover:border-purple-500 transition-colors">
+                                                <Upload className="w-5 h-5 text-white/70"/> <span id="licencia-label" className="text-sm text-white/70">Seleccionar archivo</span>
+                                            </label>
+                                            <input id="licencia" name="licencia" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg"/>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">Matrícula del Vehículo</label>
+                                            <label htmlFor="matricula" className="w-full bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg py-2 px-3 flex items-center justify-center gap-2 cursor-pointer hover:border-purple-500 transition-colors">
+                                                <Upload className="w-5 h-5 text-white/70"/> <span id="matricula-label" className="text-sm text-white/70">Seleccionar archivo</span>
+                                            </label>
+                                            <input id="matricula" name="matricula" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg"/>
+                                        </div>
+                                         <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">SOAT</label>
+                                            <label htmlFor="soat" className="w-full bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg py-2 px-3 flex items-center justify-center gap-2 cursor-pointer hover:border-purple-500 transition-colors">
+                                                <Upload className="w-5 h-5 text-white/70"/> <span id="soat-label" className="text-sm text-white/70">Seleccionar archivo</span>
+                                            </label>
+                                            <input id="soat" name="soat" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg"/>
+                                        </div>
+                                         <div className="space-y-1">
+                                            <label className="text-sm font-medium text-white/70">Revisión Técnico-Mecánica</label>
+                                            <label htmlFor="rtm" className="w-full bg-slate-700/50 border-2 border-dashed border-slate-600 rounded-lg py-2 px-3 flex items-center justify-center gap-2 cursor-pointer hover:border-purple-500 transition-colors">
+                                                <Upload className="w-5 h-5 text-white/70"/> <span id="rtm-label" className="text-sm text-white/70">Seleccionar archivo</span>
+                                            </label>
+                                            <input id="rtm" name="rtm" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.png,.jpg,.jpeg"/>
+                                        </div>
+                                     </div>
+                                    <div className="pt-4 flex justify-between">
+                                      <ActionButton onClick={prevStep} type="button" className="bg-white/10 backdrop-blur-md border border-white/20 text-white/80 hover:bg-white/20">Anterior</ActionButton>
+                                      <ActionButton onClick={() => {alert("Conductor registrado (simulado)"); navigate('login')}} className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">Finalizar Registro</ActionButton>
+                                    </div>
+                                </div>
+                            )}
+                        </form>
+                    </div>
+                  </div>
+                </div>
+            );
+        };
+        
+        const PaymentModal = ({ onClose, onAddPayment }) => {
+            const [cardType, setCardType] = useState('Card');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const last4 = e.target.cardNumber.value.slice(-4);
+                onAddPayment({
+                    type: cardType,
+                    last4: last4,
+                    expires: e.target.expiryDate.value
+                });
+            };
+
+            const handleCardNumberChange = (e) => {
+                const firstDigit = e.target.value.charAt(0);
+                if (firstDigit === '4') setCardType('Visa');
+                else if (firstDigit === '5') setCardType('Mastercard');
+                else setCardType('Card');
+            }
+
+            return (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-slate-800 border border-white/10 rounded-2xl shadow-2xl p-8 w-full max-w-md m-4 relative">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-white/50 hover:text-white">
+                            <X className="w-6 h-6" />
+                        </button>
+                        <h2 className="text-2xl font-bold text-white mb-6">Añadir Método de Pago</h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div>
+                                <label className="text-sm font-medium text-white/70">Número de Tarjeta</label>
+                                <input name="cardNumber" type="text" onChange={handleCardNumberChange} required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-white/70">Vencimiento (MM/YY)</label>
+                                    <input name="expiryDate" type="text" placeholder="MM/YY" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-white/70">CVV</label>
+                                    <input name="cvv" type="text" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                </div>
+                            </div>
+                            <div className="pt-4">
+                               <ActionButton type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">Añadir Tarjeta</ActionButton>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+        
+        const ProfileLayout = ({ children }) => {
+            const { user, navigate } = useApp();
+            
+            useEffect(() => {
+                if (!user) navigate('login');
+            }, [user, navigate]);
+
+            if (!user) return null;
+
+            return (
+                 <main className="relative z-10 pt-32 pb-20">
+                    <div className="max-w-4xl mx-auto px-4">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="p-6 md:p-10">
+                                <div className="flex flex-col md:flex-row items-center text-center md:text-left gap-6 pb-8">
+                                    <div className="relative mb-4 md:mb-0">
+                                        <img src={user.avatarUrl} alt="Foto de perfil" className="w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-slate-600 shadow-lg"/>
+                                        <ActionButton className="absolute bottom-1 right-1 !p-0 w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                                            <Pencil className="w-5 h-5"/>
+                                        </ActionButton>
+                                    </div>
+                                    <div className="flex-grow">
+                                        <h1 className="text-3xl md:text-4xl font-bold text-white">{user.name}</h1>
+                                        <p className="text-white/60 text-sm mt-1">Miembro desde {user.miembroDesde}</p>
+                                        <div className="flex items-center justify-center md:justify-start gap-4 mt-4">
+                                            <div className="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-full">Viajes Creados: {user.stats.created}</div>
+                                            <div className="bg-cyan-500/10 text-cyan-400 text-xs font-bold px-3 py-1.5 rounded-full">Completados: {user.stats.completed}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {children}
+                        </div>
+                    </div>
+                </main>
+            );
+        };
+
+        const ProfileTabs = ({ tabs, activeTab, setActiveTab }) => (
+            <div className="border-b border-white/10 px-6 md:px-10">
+                <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.name}
+                            onClick={() => setActiveTab(tab.name)}
+                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                                activeTab === tab.name
+                                    ? 'border-purple-500 text-purple-400'
+                                    : 'border-transparent text-white/50 hover:border-slate-500 hover:text-white'
+                            }`}
+                        >
+                            {tab.name}
+                        </button>
+                    ))}
+                </nav>
+            </div>
+        );
+
+        const PassengerProfilePage = () => {
+            const { user } = useApp();
+            const [activeTab, setActiveTab] = useState('Biografía');
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [paymentMethods, setPaymentMethods] = useState([{ type: 'Visa', last4: '4242', expires: '12/26' }]);
+            
+            const handleAddPayment = (newMethod) => {
+                setPaymentMethods([...paymentMethods, newMethod]);
+                setIsModalOpen(false);
+            };
+
+            const tabs = [
+                { name: 'Biografía' },
+                { name: 'Historial de Viajes' },
+                { name: 'Billetera' },
+                { name: 'Preferencias' },
+            ];
+            
+            return (
+                <ProfileLayout>
+                    <ProfileTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+                    <div className="p-6 md:p-10">
+                        {activeTab === 'Biografía' && <div className="text-white/80 leading-relaxed">{user.descripcion}</div>}
+                        {activeTab === 'Historial de Viajes' && <div>Historial de viajes del pasajero...</div>}
+                        {activeTab === 'Billetera' && (
+                            <div>
+                                <h3 className="text-xl font-semibold text-white mb-4">Saldo Disponible</h3>
+                                <p className="text-4xl font-bold text-emerald-400 mb-6">{user.wallet.balance.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
+                                <ActionButton className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">Añadir Fondos</ActionButton>
+                                
+                                <h3 className="text-xl font-semibold text-white mt-8 mb-4">Métodos de Pago</h3>
+                                {paymentMethods.map((method, index) => (
+                                    <div key={index} className="bg-slate-700/50 p-4 rounded-lg flex items-center gap-4 mb-2">
+                                        <CreditCard className="w-8 h-8 text-purple-400"/>
+                                        <div>
+                                            <p className="font-semibold text-white">{method.type} terminada en {method.last4}</p>
+                                            <p className="text-sm text-white/60">Expira {method.expires}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                <ActionButton onClick={() => setIsModalOpen(true)} className="w-full mt-4 bg-white/10 text-white/80 hover:bg-white/20">
+                                    <Plus className="w-5 h-5"/> Añadir Método de Pago
+                                </ActionButton>
+                            </div>
+                        )}
+                        {activeTab === 'Preferencias' && <div>Preferencias del pasajero...</div>}
+                    </div>
+                    {isModalOpen && <PaymentModal onClose={() => setIsModalOpen(false)} onAddPayment={handleAddPayment} />}
+                </ProfileLayout>
+            );
+        };
+
+        const DriverProfilePage = () => {
+            const { user, setUser } = useApp();
+            const [activeTab, setActiveTab] = useState('Biografía');
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [paymentMethods, setPaymentMethods] = useState([{ type: 'Cuenta Bancaria', last4: '1234', bank: 'Bancolombia' }]);
+            const [isCustomConsumption, setIsCustomConsumption] = useState(false);
+            const [customConsumption, setCustomConsumption] = useState(user?.vehicle?.consumption || '');
+
+            const handleAddPayment = (newMethod) => {
+                setPaymentMethods([...paymentMethods, newMethod]);
+                setIsModalOpen(false);
+            };
+
+            const handleConsumptionUpdate = () => {
+                const updatedUser = {
+                    ...user,
+                    vehicle: {
+                        ...user.vehicle,
+                        consumption: isCustomConsumption ? customConsumption : user.vehicle.consumption,
+                    },
+                };
+                setUser(updatedUser);
+                alert("Consumo actualizado");
+            }
+            
+            const tabs = [
+                { name: 'Biografía' },
+                { name: 'Mi Vehículo' },
+                { name: 'Billetera' },
+                { name: 'Huella de Carbono' },
+            ];
+
+            return (
+                <ProfileLayout>
+                    <ProfileTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+                     <div className="p-6 md:p-10">
+                        {activeTab === 'Biografía' && <div className="text-white/80 leading-relaxed">{user.descripcion}</div>}
+                        {activeTab === 'Mi Vehículo' && (
+                             <div className="text-white/80 grid md:grid-cols-2 gap-4">
+                                <p><strong>Marca:</strong> {user.vehicle.make}</p>
+                                <p><strong>Modelo:</strong> {user.vehicle.model}</p>
+                                <p><strong>Año:</strong> {user.vehicle.year}</p>
+                                <p><strong>Placa:</strong> {user.vehicle.plate}</p>
+                                <p><strong>Color:</strong> {user.vehicle.color}</p>
+                                <div className="md:col-span-2">
+                                  <strong>Características:</strong>
+                                  <ul className="list-disc list-inside mt-2">
+                                     {user.vehicle.features.map(f => <li key={f}>{f}</li>)}
+                                  </ul>
+                                </div>
+                             </div>
+                        )}
+                        {activeTab === 'Billetera' && (
+                             <div>
+                                {/* Billetera content */}
+                             </div>
+                        )}
+                        {activeTab === 'Huella de Carbono' && (
+                            <div className="space-y-6">
+                                <h3 className="text-xl font-semibold text-white">Gestión de Huella de Carbono</h3>
+                                <div className="bg-slate-700/50 p-6 rounded-lg">
+                                    <p className="text-sm text-white/70">Datos de tu vehículo para el cálculo:</p>
+                                    <p className="text-lg font-semibold text-white">{user.vehicle.make} {user.vehicle.model} {user.vehicle.version} ({user.vehicle.year})</p>
+                                    <p className="text-white/80">
+                                        <span className="font-semibold">Consumo estándar del fabricante:</span> {user.vehicle.consumption} km/L
+                                    </p>
+                                     <p className="text-white/80">
+                                        <span className="font-semibold">Tipo de combustible:</span> {user.vehicle.fuelType}
+                                    </p>
+                                     <div className="mt-4">
+                                        <label className="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" checked={isCustomConsumption} onChange={() => setIsCustomConsumption(!isCustomConsumption)} className="accent-purple-500 w-4 h-4"/>
+                                            <span className="text-sm text-white/80">Ajustar con mi consumo real medido.</span>
+                                        </label>
+                                        {isCustomConsumption && (
+                                            <div className="mt-2 animate-fade-in">
+                                                <input type="number" value={customConsumption} onChange={(e) => setCustomConsumption(e.target.value)} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition"/>
+                                                <button onClick={handleConsumptionUpdate} className="mt-2 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm">Guardar Consumo</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-700/50 p-6 rounded-lg">
+                                     <p className="text-sm text-white/70">Estadísticas de tus viajes:</p>
+                                     <p className="text-lg font-semibold text-emerald-400">Total CO₂ ahorrado: 125.3 kg</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    {isModalOpen && <PaymentModal onClose={() => setIsModalOpen(false)} onAddPayment={handleAddPayment} />}
+                </ProfileLayout>
+            );
+        };
+
+
+        const SearchPage = () => {
+            const { navigate } = useApp();
+            const allTrips = [
+                {id:1, from: "Medellín, Antioquia", to: "Bogotá, D.C.", driver: "Diana Garcia", date: "June 7th, 2025", time: "3:26 PM", seats: 3, price: 95000, avatar: "DG" },
+                {id:2, from: "Cali, Valle del Cauca", to: "Pereira, Risaralda", driver: "Tomás R.", date: "June 8th, 2025", time: "1:00 PM", seats: 1, price: 35000, avatar: "TR" },
+                {id:3, from: "Cartagena, Bolívar", to: "Santa Marta, Magdalena", driver: "Carlos Cruz", date: "June 8th, 2025", time: "9:00 AM", seats: 4, price: 45000, avatar: "CC" },
+                 {id:4, from: "Bogotá, D.C.", to: "Medellín, Antioquia", driver: "Sofia Vergara", date: "June 9th, 2025", time: "8:00 AM", seats: 2, price: 90000, avatar: "SV" },
+            ];
+            const [searchResults, setSearchResults] = useState(allTrips);
+            const [searchOrigin, setSearchOrigin] = useState('');
+            const [searchDestination, setSearchDestination] = useState('');
+
+            const handleSearch = (e) => {
+                e.preventDefault();
+                if (!searchOrigin && !searchDestination) {
+                    setSearchResults(allTrips);
+                    return;
+                }
+                const filtered = allTrips.filter(trip => {
+                    const originMatch = searchOrigin ? trip.from.toLowerCase().includes(searchOrigin.toLowerCase()) : true;
+                    const destinationMatch = searchDestination ? trip.to.toLowerCase().includes(searchDestination.toLowerCase()) : true;
+                    return originMatch && destinationMatch;
+                });
+                setSearchResults(filtered);
+            };
+            
+            return (
+                <div className="relative z-10 pt-32 pb-20">
+                    <div className="max-w-7xl mx-auto px-4">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 mb-12">
+                            <h2 className="text-3xl font-bold text-center text-white mb-6">Encuentra tu próximo viaje</h2>
+                            <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+                                <div>
+                                    <label className="text-sm font-medium text-white/70">Origen</label>
+                                    <input list="locations-list" type="text" placeholder="Ciudad de partida" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" value={searchOrigin} onChange={e => setSearchOrigin(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-white/70">Destino</label>
+                                    <input list="locations-list" type="text" placeholder="Ciudad de llegada" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" value={searchDestination} onChange={e => setSearchDestination(e.target.value)} />
+                                </div>
+                                 <datalist id="locations-list">
+                                    {locations.map(loc => <option key={loc.name} value={loc.name} />)}
+                                </datalist>
+                                <div><label className="text-sm font-medium text-white/70">Fecha</label><input type="date" className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" style={{colorScheme: 'dark'}}/></div>
+                                <ActionButton type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white !py-2.5"><Search className="w-5 h-5"/>Buscar</ActionButton>
+                            </form>
+                        </div>
+                        
+                        {searchResults.length > 0 ? (
+                            <div>
+                                <h3 className="text-2xl font-bold text-white mb-6">{searchResults.length} Viajes Disponibles</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    {searchResults.map(trip => (
+                                        <div key={trip.id} className="bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg flex flex-col p-6 transition-all duration-300 hover:border-purple-400/50 hover:shadow-purple-500/10">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div><h4 className="text-lg font-bold text-white">{trip.from} → {trip.to}</h4><p className="text-xs text-white/50">Conductor: {trip.driver}</p></div>
+                                                <div className="w-12 h-12 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xl border-2 border-slate-700">{trip.avatar}</div>
+                                            </div>
+                                            <div className="space-y-2 text-sm text-white/80 mb-4 flex-grow">
+                                                <p><strong>Fecha:</strong> {trip.date}</p>
+                                                <p><strong>Hora:</strong> {trip.time}</p>
+                                                <p><strong>Asientos:</strong> {trip.seats} disponibles</p>
+                                                <p className="text-lg font-bold text-purple-300 pt-2">{trip.price.toLocaleString('es-CO', { style: 'currency', currency: 'COP' })} / asiento</p>
+                                            </div>
+                                            <ActionButton onClick={() => navigate('tripDetails')} className="w-full mt-auto bg-slate-700 hover:bg-slate-600 text-white !py-2">Ver Detalles</ActionButton>
+                                        </div>
+                                    ))}
+                                </div>
+                             </div>
+                        ) : (
+                             <div className="text-center bg-slate-800/50 border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-12">
+                                <Bell className="w-16 h-16 text-purple-400 mx-auto mb-4"/>
+                                <h2 className="text-3xl font-bold text-white mb-3">No hay viajes para tu búsqueda.</h2>
+                                <p className="text-white/70 mb-6 max-w-md mx-auto">Crea una alerta y te avisaremos por correo o WhatsApp cuando haya un viaje disponible.</p>
+                                <form className="max-w-sm mx-auto space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Alerta creada!'); }}>
+                                     <div>
+                                        <label className="text-sm font-medium text-white/70 sr-only">Email</label>
+                                        <input type="email" placeholder="tu.correo@example.com" required className="w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium text-white/70 sr-only">WhatsApp</label>
+                                        <input type="tel" placeholder="Número de WhatsApp (Opcional)" className="w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                    </div>
+                                    <ActionButton type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">Crear Alerta</ActionButton>
+                                </form>
+                             </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+        
+        const TripDetailsPage = () => {
+            const { navigate } = useApp();
+            const [passengerCount, setPassengerCount] = useState(1);
+            return (
+                <div className="relative z-10 pt-32 pb-20">
+                    <div className="max-w-6xl mx-auto px-4">
+                      <div className="grid lg:grid-cols-3 gap-8">
+                          {/* Main column */}
+                          <div className="lg:col-span-2 space-y-8">
+                                <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                                  <h1 className="text-4xl font-bold text-white mb-2">Medellín → Bogotá</h1>
+                                  <div className="flex items-center gap-4 text-white/70">
+                                    <div className="flex items-center gap-2"><Clock className="w-4 h-4"/> Sábado, 7 de junio</div>
+                                    <div className="flex items-center gap-2"><RouteIcon className="w-4 h-4"/> 415 km</div>
+                                  </div>
+                                </div>
+                                
+                                {/* Itinerary */}
+                                <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                                    <h2 className="text-xl font-semibold text-white mb-6">Itinerario</h2>
+                                    <div className="relative pl-8 space-y-10">
+                                        {/* Timeline line */}
+                                        <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-700"></div>
+                                        
+                                        <div className="relative flex items-start gap-4">
+                                           <div className="absolute left-0 top-0 mt-1.5 -translate-x-1/2 p-2 bg-slate-800 rounded-full border-2 border-purple-500"><MapPin className="w-4 h-4 text-purple-400"/></div>
+                                           <div>
+                                              <p className="font-semibold text-white">06:00 - Salida</p>
+                                              <p className="text-sm text-white/70">Av. El Dorado #68c-61, Bogotá</p>
+                                           </div>
+                                        </div>
+                                         <div className="relative flex items-start gap-4">
+                                           <div className="absolute left-0 top-0 mt-1.5 -translate-x-1/2 p-2 bg-slate-800 rounded-full border-2 border-slate-600"><MapPin className="w-4 h-4 text-slate-400"/></div>
+                                           <div>
+                                              <p className="font-semibold text-white">16:30 - Llegada</p>
+                                              <p className="text-sm text-white/70">Terminal del Norte, Medellín</p>
+                                           </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Driver Info */}
+                                <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                                    <div className="flex items-center gap-4">
+                                        <img src="https://i.pravatar.cc/150?u=diana@example.com" className="w-20 h-20 rounded-full border-2 border-slate-600"/>
+                                        <div>
+                                            <p className="font-bold text-white text-lg">Diana Garcia</p>
+                                            <div className="flex items-center gap-1 text-sm text-amber-400"><Star className="w-4 h-4"/> 4.9 <span className="text-white/50">(88 opiniones)</span></div>
+                                        </div>
+                                    </div>
+                                    <hr className="border-slate-700 my-6"/>
+                                    <ul className="space-y-3 text-sm text-white/80">
+                                        <li className="flex items-center gap-2"><CheckCircle className="w-5 h-5 text-emerald-400"/> Perfil Verificado</li>
+                                        <li className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-cyan-400"/> Super Conductora</li>
+                                    </ul>
+                                </div>
+                          </div>
+                          
+                          {/* Sticky sidebar */}
+                           <div className="lg:col-span-1">
+                                <div className="sticky top-28 space-y-6">
+                                    <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                           <h2 className="text-xl font-semibold text-white">Reservar</h2>
+                                           <span className="text-sm font-bold bg-green-500/10 text-green-400 px-3 py-1 rounded-full">Confirmación inmediata</span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between py-4 border-y border-slate-700">
+                                            <label className="font-medium text-white">Pasajeros</label>
+                                            <div className="flex items-center gap-3 bg-slate-700/50 rounded-full p-1">
+                                                <button onClick={() => setPassengerCount(p => Math.max(1, p - 1))} className="w-7 h-7 rounded-full bg-slate-600 hover:bg-slate-500 transition-colors flex items-center justify-center"><Minus className="w-4 h-4 text-white"/></button>
+                                                <span className="font-bold w-4 text-center text-white">{passengerCount}</span>
+                                                <button onClick={() => setPassengerCount(p => Math.min(3, p + 1))} className="w-7 h-7 rounded-full bg-slate-600 hover:bg-slate-500 transition-colors flex items-center justify-center"><Plus className="w-4 h-4 text-white"/></button>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between items-baseline mt-4 mb-6">
+                                            <p className="text-lg font-medium text-white">Total</p>
+                                            <p className="text-3xl font-bold text-purple-400">{(95000 * passengerCount).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })}</p>
+                                        </div>
+
+                                        <ActionButton onClick={() => alert('Solicitud enviada (simulado).')} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                                            Reservar
+                                        </ActionButton>
+                                        <p className="text-xs text-center text-white/50 mt-3">No se te cobrará nada todavía</p>
+                                    </div>
+                                    <div className="text-center text-sm text-white/60">
+                                        <a href="#" className="hover:text-white underline">Política de cancelación</a>
+                                    </div>
+                                </div>
+                            </div>
+                      </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        const InfoPage = ({ title, children, cta=true }) => (
+            <div className="relative z-10 pt-32 pb-20">
+                <div className="max-w-5xl mx-auto px-4">
+                    <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 sm:p-12">
+                        <h1 className="text-4xl font-extrabold text-center bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-12">{title}</h1>
+                        <div className="prose prose-invert prose-lg max-w-none text-white/80 leading-relaxed space-y-4">{children}</div>
+                        {cta && (<div className="text-center mt-12 pt-8 border-t border-white/10">
+                            <h2 className="text-3xl font-bold text-white mb-4">¿Listo para tu próximo viaje?</h2>
+                            <p className="text-white/70 mb-6 max-w-xl mx-auto">Empieza hoy mismo a buscar tu compañero de ruta ideal o publica los asientos libres en tu vehículo.</p>
+                             <ActionButton onClick={() => navigate('search')} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8">¡Buscar un Viaje!</ActionButton>
+                        </div>)}
+                    </div>
+                </div>
+            </div>
+        );
+        
+        const FaqItem = ({ q, a }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            return (
+                 <div className="border-b border-slate-700">
+                    <button onClick={() => setIsOpen(!isOpen)} className="w-full flex justify-between items-center text-left py-5">
+                        <span className="font-semibold text-lg text-white">{q}</span>
+                        <ChevronRight className={`w-6 h-6 text-purple-400 transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`} />
+                    </button>
+                    {isOpen && <div className="pt-2 pb-5 pl-2 text-white/70 animate-fade-in">{a}</div>}
+                 </div>
+            )
+        };
+        
+        const HelpCenterPage = () => {
+             const { navigate } = useApp();
+            return (
+                 <InfoPage title="Estamos Aquí para Ti: Soporte 'viajemos juntos'" cta={false}>
+                    <p className="text-center text-lg">En "viajemos juntos", tu experiencia es nuestra prioridad. Si tienes alguna pregunta, inconveniente o necesitas asistencia, nuestro equipo de soporte está listo para ayudarte.</p>
+                    <h3 className="text-2xl font-bold text-white mt-10 mb-6 text-center">Canales de Soporte</h3>
+                    <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                        <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 flex items-start gap-4">
+                            <BookUser className="w-8 h-8 text-cyan-400 mt-1"/>
+                            <div>
+                                <h4 className="font-semibold text-white">Centro de Ayuda en la App/Web</h4>
+                                <p className="text-sm text-white/70">Encuentra respuestas a las preguntas más comunes en nuestra sección de <a href="#" onClick={(e)=>{e.preventDefault(); navigate('faq')}} className="text-purple-400 underline">Preguntas Frecuentes (FAQ)</a>.</p>
+                            </div>
+                        </div>
+                         <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 flex items-start gap-4">
+                            <Mail className="w-8 h-8 text-cyan-400 mt-1"/>
+                            <div>
+                                <h4 className="font-semibold text-white">Correo Electrónico</h4>
+                                <p className="text-sm text-white/70">Escríbenos a <a href="mailto:soporte@viajemosjuntos.co" className="text-purple-400 underline">soporte@viajemosjuntos.co</a>. Nos esforzamos por responder en 24-48 horas hábiles.</p>
+                            </div>
+                        </div>
+                         <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 flex items-start gap-4">
+                            <MessageSquare className="w-8 h-8 text-cyan-400 mt-1"/>
+                            <div>
+                                <h4 className="font-semibold text-white">Formulario de Contacto Web</h4>
+                                <p className="text-sm text-white/70">Envíanos tus consultas detalladas a través de nuestro <a href="#" onClick={(e)=>{e.preventDefault(); navigate('contact')}} className="text-purple-400 underline">formulario de contacto</a>.</p>
+                            </div>
+                        </div>
+                        <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10 flex items-start gap-4">
+                            <Users className="w-8 h-8 text-cyan-400 mt-1"/>
+                            <div>
+                                <h4 className="font-semibold text-white">Redes Sociales</h4>
+                                <p className="text-sm text-white/70">También puedes contactarnos a través de nuestros perfiles, aunque para soporte técnico te recomendamos los canales anteriores.</p>
+                            </div>
+                        </div>
+                    </div>
+                 </InfoPage>
+            );
+        };
+
+        const AboutUsPage = () => (
+            <InfoPage title="Sobre 'viajemos juntos': Movilidad Inteligente y Sostenible para Antioquia">
+                <p>Bienvenido a "viajemos juntos", la plataforma que está transformando la manera en que nos movemos por Antioquia. Nacimos de una necesidad real y de una pasión por optimizar nuestros viajes, hacerlos más económicos y, al mismo tiempo, cuidar nuestro planeta.</p>
+                <p>Somos un equipo con profunda experiencia en los sectores de transporte y turismo en Colombia, y con un conocimiento especializado en el impacto ambiental de nuestros desplazamientos. Entendemos los desafíos de movilidad que enfrentan los antioqueños día a día: desde los altos costos de los peajes y el combustible hasta la necesidad de conexiones más directas y eficientes entre nuestros municipios.</p>
+                <p>"viajemos juntos" es más que una aplicación; es una comunidad. Conectamos a conductores que tienen asientos libres en sus vehículos con pasajeros que se dirigen en la misma dirección. Nuestro modelo se basa en compartir los gastos del viaje de manera justa y transparente, haciendo cada trayecto más accesible para todos.</p>
+                <p>Además, estamos comprometidos con un futuro más verde. Creemos que cada viaje compartido es un paso hacia la reducción de nuestra huella de carbono. Por ello, integramos herramientas para que tanto usuarios como empresas puedan ser conscientes de su impacto y contribuir activamente a la sostenibilidad de nuestra región.</p>
+                <p className="font-semibold">Nuestra misión es simple: hacer que viajar por Antioquia sea más inteligente, económico, colaborativo y sostenible.</p>
+            </InfoPage>
+        );
+        
+        const MissionPage = () => (
+            <InfoPage title="Nuestra Misión: Tejer Conexiones, Transformar la Movilidad en Antioquia">
+                 <p className="text-center text-lg">En "viajemos juntos", creemos que la movilidad va más allá de simplemente trasladarse de un punto A un punto B. Se trata de conectar personas, crear oportunidades y construir una comunidad más fuerte y sostenible en nuestra querida Antioquia.</p>
+                 <p className="text-center mt-4 text-lg">Nuestra misión es conectar comunidades a través de una plataforma de viajes compartidos que sea:</p>
+                <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10">
+                        <h3 className="text-xl font-semibold text-purple-400 mb-2">Colaborativa</h3>
+                        <p className="text-white/70 text-sm">Fomentamos la cultura de compartir, donde conductores y pasajeros se benefician mutuamente, optimizando recursos y haciendo los viajes más amigables.</p>
+                    </div>
+                     <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10">
+                        <h3 className="text-xl font-semibold text-purple-400 mb-2">Accesible</h3>
+                        <p className="text-white/70 text-sm">Buscamos que más personas puedan acceder a opciones de transporte convenientes y asequibles, reduciendo las barreras económicas y geográficas.</p>
+                    </div>
+                     <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10">
+                        <h3 className="text-xl font-semibold text-purple-400 mb-2">Eficiente</h3>
+                        <p className="text-white/70 text-sm">Facilitamos conexiones directas y personalizadas, reduciendo tiempos de viaje y la dependencia de rutas fijas que no siempre se ajustan a las necesidades individuales.</p>
+                    </div>
+                     <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10">
+                        <h3 className="text-xl font-semibold text-purple-400 mb-2">Sostenible</h3>
+                        <p className="text-white/70 text-sm">Estamos comprometidos con el medio ambiente. Cada asiento ocupado en un viaje compartido significa potencialmente un auto menos en la vía, contribuyendo a la reducción de la congestión y las emisiones de CO₂.</p>
+                    </div>
+                     <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10">
+                        <h3 className="text-xl font-semibold text-purple-400 mb-2">Local</h3>
+                        <p className="text-white/70 text-sm">Nuestro corazón está en Antioquia. Entendemos las particularidades de nuestra región y enfocamos nuestros esfuerzos en solucionar los desafíos de movilidad que enfrentamos aquí.</p>
+                    </div>
+                     <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10">
+                        <h3 className="text-xl font-semibold text-purple-400 mb-2">Confiable</h3>
+                        <p className="text-white/70 text-sm">Construimos un entorno de confianza a través de la verificación de usuarios, sistemas de calificación y un soporte cercano, para que cada viaje sea una experiencia segura y positiva.</p>
+                    </div>
+                </div>
+                 <p className="mt-12 text-center text-lg font-semibold">"viajemos juntos" es una herramienta para tejer lazos, facilitar encuentros, apoyar la economía local y movernos hacia un futuro donde la movilidad sea un pilar del desarrollo y bienestar de todas nuestras comunidades en Antioquia.</p>
+            </InfoPage>
+        );
+
+        const BlogPage = () => (
+            <InfoPage title="Conéctate con 'viajemos juntos': Novedades, Consejos y Más">
+                 <p className="text-center mb-12">En esta sección, encontrarás artículos e información relevante sobre:</p>
+                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="bg-slate-800/40 rounded-xl overflow-hidden border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/0f172a/e2e8f0?text=Blog+Post'; }} className="w-full h-48 object-cover"/>
+                        <div className="p-6">
+                            <h3 className="font-bold text-white mb-2 text-lg">Novedades de la Plataforma</h3>
+                            <p className="text-sm text-white/60 mb-4">Actualizaciones, nuevas funcionalidades y mejoras en "viajemos juntos".</p>
+                            <a href="#" className="font-semibold text-purple-400 hover:text-purple-300">Leer más →</a>
+                        </div>
+                    </div>
+                     <div className="bg-slate-800/40 rounded-xl overflow-hidden border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1556742044-59324e2701a2?q=80&w=2070&auto=format&fit=crop" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/0f172a/e2e8f0?text=Consejos+de+Viaje'; }} className="w-full h-48 object-cover"/>
+                        <div className="p-6">
+                            <h3 className="font-bold text-white mb-2 text-lg">Consejos para Viajeros y Conductores</h3>
+                            <p className="text-sm text-white/60 mb-4">Cómo sacar el máximo provecho a la app, consejos de seguridad, y cómo hacer de cada viaje una gran experiencia.</p>
+                            <a href="#" className="font-semibold text-purple-400 hover:text-purple-300">Leer más →</a>
+                        </div>
+                    </div>
+                     <div className="bg-slate-800/40 rounded-xl overflow-hidden border border-white/10">
+                        <img src="https://images.unsplash.com/photo-1542372147-9d1e82e69b54?q=80&w=2070&auto=format&fit=crop" onError={(e) => { e.target.onerror = null; e.target.src='https://placehold.co/600x400/0f172a/e2e8f0?text=Sostenibilidad'; }} className="w-full h-48 object-cover"/>
+                        <div className="p-6">
+                            <h3 className="font-bold text-white mb-2 text-lg">Movilidad Sostenible en Antioquia</h3>
+                            <p className="text-sm text-white/60 mb-4">Noticias sobre iniciativas locales, impacto del carpooling y cómo contribuimos a un transporte más verde.</p>
+                            <a href="#" className="font-semibold text-purple-400 hover:text-purple-300">Leer más →</a>
+                        </div>
+                    </div>
+                 </div>
+            </InfoPage>
+        );
+
+        const FaqPage = () => {
+            const faqSections = {
+                "Generales": [
+                    { q: "¿Qué es 'viajemos juntos'?", a: "Es una plataforma comunitaria que conecta conductores con asientos libres y pasajeros que van en la misma dirección, para compartir los gastos del viaje y reducir el impacto ambiental." },
+                    { q: "¿Cómo me registro?", a: "Puedes registrarte fácilmente a través de la aplicación o nuestro sitio web, completando tu perfil y siguiendo los pasos de verificación." },
+                    { q: "¿Es gratis usar 'viajemos juntos'?", a: "El registro y la publicación de viajes son gratuitos. La plataforma puede aplicar una pequeña tarifa de servicio sobre las reservas para mantener y mejorar la plataforma, la cual siempre se mostrará de forma transparente antes de confirmar." },
+                    { q: "¿En qué ciudades/regiones opera 'viajemos juntos'?", a: "Actualmente, nuestra operación está centrada en Antioquia, conectando sus municipios y ciudades principales." }
+                ],
+                "Para Pasajeros": [
+                    { q: "¿Cómo busco y reservo un viaje?", a: "Usa el buscador en la página principal, ingresa tu origen, destino y fecha. Revisa los viajes disponibles, elige el que más te convenga y solicita la reserva." },
+                    { q: "¿Cómo se calcula la contribución para los gastos del viaje?", a: "La contribución es sugerida por el conductor, basándose en un cálculo que considera distancia, peajes y costos de combustible. El objetivo es compartir gastos, no generar ganancias." },
+                    { q: "¿Qué pasa si necesito cancelar un viaje?", a: "Puedes cancelar desde la sección 'Mis Viajes'. Revisa nuestra política de cancelación para entender si aplica algún reembolso." }
+                ],
+                "Para Conductores": [
+                    { q: "¿Cómo publico un viaje?", a: "Ve a 'Publicar Viaje', completa los detalles de tu ruta, horario, asientos disponibles y la contribución sugerida por asiento." },
+                    { q: "¿Cómo y cuándo recibo la contribución de los pasajeros?", a: "La contribución se procesa a través de la plataforma y se transfiere a tu billetera virtual después de que el viaje se ha completado exitosamente." }
+                ],
+                "Seguridad": [
+                     { q: "¿Qué medidas de seguridad tiene la plataforma?", a: "Contamos con verificación de perfiles, sistema de calificaciones, comunicación segura dentro de la app y un equipo de soporte dedicado. Visita nuestra sección de Seguridad para más detalles." },
+                     { q: "¿Cómo funciona el sistema de calificaciones?", a: "Después de cada viaje, tanto pasajeros como conductores pueden dejar una calificación y un comentario sobre su experiencia. Esto ayuda a toda la comunidad a viajar con más confianza." }
+                ]
+            };
+
+            return (
+                 <InfoPage title="Preguntas Frecuentes (FAQ)" cta={false}>
+                    {Object.entries(faqSections).map(([sectionTitle, faqs]) => (
+                        <div key={sectionTitle} className="mb-10">
+                            <h2 className="text-2xl font-bold text-purple-400 mb-4">{sectionTitle}</h2>
+                            {faqs.map((faq, index) => (
+                                <FaqItem key={index} q={faq.q} a={faq.a} />
+                            ))}
+                        </div>
+                    ))}
+                 </InfoPage>
+            );
+        };
+        
+        const ContactPage = () => {
+             const { navigate } = useApp();
+            return (
+            <InfoPage title="Contáctanos" cta={false}>
+                <div className="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 className="text-xl font-semibold text-white mb-4">Información General y Soporte</h3>
+                        <ul className="space-y-2 text-white/80">
+                            <li className="flex items-center gap-3"><Mail className="w-5 h-5 text-purple-400"/><span>info@viajemosjuntos.co</span></li>
+                            <li className="flex items-center gap-3"><LifeBuoy className="w-5 h-5 text-purple-400"/><span>soporte@viajemosjuntos.co</span></li>
+                        </ul>
+                         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Servicios Corporativos</h3>
+                        <ul className="space-y-2 text-white/80">
+                           <li className="flex items-center gap-3"><Briefcase className="w-5 h-5 text-purple-400"/><span>corporativo@viajemosjuntos.co</span></li>
+                        </ul>
+                         <h3 className="text-xl font-semibold text-white mt-8 mb-4">Redes Sociales</h3>
+                        <ul className="space-y-2 text-white/80">
+                           <li className="flex items-center gap-3"><Facebook className="w-5 h-5 text-purple-400"/><span>/ViajemosJuntosCO</span></li>
+                           <li className="flex items-center gap-3"><Instagram className="w-5 h-5 text-purple-400"/><span>@ViajemosJuntosCO</span></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-semibold text-white mb-4">Envíanos un Mensaje</h3>
+                         <form className="space-y-4">
+                            <div><label className="text-sm font-medium text-white/70">Tu Nombre</label><input type="text" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                            <div><label className="text-sm font-medium text-white/70">Tu Correo</label><input type="email" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                            <div><label className="text-sm font-medium text-white/70">Mensaje</label><textarea rows="5" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" /></div>
+                            <div className="text-right pt-2"><ActionButton type="submit" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">Enviar Mensaje</ActionButton></div>
+                         </form>
+                    </div>
+                </div>
+            </InfoPage>
+            )
+        };
+
+        const TermsPage = () => (
+             <InfoPage title="Términos y Condiciones de Uso de 'viajemos juntos'" cta={false}>
+                <p className="text-sm text-white/60">Última actualización: 07 de Junio, 2024</p>
+                <p>Bienvenido/a a "viajemos juntos". Al utilizar nuestra plataforma (sitio web y aplicación móvil), aceptas estos Términos y Condiciones. Por favor, léelos con atención.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Definición del Servicio</h3>
+                <p>"viajemos juntos" es una plataforma tecnológica que actúa como intermediaria para conectar a conductores que disponen de asientos libres en sus vehículos particulares con pasajeros que desean compartir un trayecto específico y sus gastos asociados (carpooling). No somos una empresa de transporte ni ofrecemos servicios de taxi. El acuerdo de viaje se establece directamente entre el conductor y el pasajero.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Uso de la Plataforma</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                    <li><span className="font-semibold">Registro y Verificación:</span> Debes proporcionar información veraz y mantenerla actualizada. Nos reservamos el derecho de verificar tu identidad.</li>
+                    <li><span className="font-semibold">Conductores:</span> Deben poseer licencia vigente, SOAT, revisión técnico-mecánica al día, y publicar viajes con la intención genuina de compartir gastos, no de lucrarse.</li>
+                    <li><span className="font-semibold">Pasajeros:</span> Deben comportarse respetuosamente y cumplir con el pago de la contribución acordada.</li>
+                </ul>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Limitación de Responsabilidad</h3>
+                <p>Como intermediarios, no somos responsables por incidentes ocurridos durante los viajes, la conducta de los usuarios, ni por la exactitud de toda la información publicada por ellos.</p>
+             </InfoPage>
+        );
+
+        const PrivacyPage = () => (
+            <InfoPage title="Política de Privacidad y Tratamiento de Datos Personales" cta={false}>
+                <p className="text-sm text-white/60">Última actualización: 07 de Junio, 2024</p>
+                <p>En "viajemos juntos", valoramos tu privacidad y nos comprometemos a proteger tus datos personales. Esta política explica cómo recopilamos, usamos, compartimos y protegemos tu información.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Datos que Recopilamos</h3>
+                <p>Información de registro (nombre, contacto, identificación), datos de perfil, información de viajes (rutas, horarios), datos de vehículos (conductores), datos de ubicación (con tu consentimiento), calificaciones, comunicaciones con soporte, información de pago (a través de pasarelas seguras), y datos de uso de la plataforma.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Finalidades del Tratamiento</h3>
+                <p>Utilizamos tus datos para prestar y mejorar nuestros servicios, verificar tu identidad, facilitar la comunicación, procesar pagos, calcular la huella de carbono, enviar notificaciones y cumplir con obligaciones legales.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Tus Derechos (ARCO)</h3>
+                <p>Tienes derecho a conocer, actualizar, rectificar tus datos, y demás derechos consagrados en la Ley 1581 de 2012. Puedes contactarnos para ejercerlos.</p>
+            </InfoPage>
+        );
+
+        const LegalNoticePage = () => (
+            <InfoPage title="Avisos Legales Importantes" cta={false}>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Naturaleza de la Plataforma</h3>
+                <p>"viajemos juntos" es una plataforma tecnológica que actúa únicamente como intermediaria para facilitar el carpooling. No es una empresa de transporte. El contrato de viaje se celebra exclusivamente entre conductor y pasajero.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Responsabilidad del Usuario</h3>
+                <p>Cada usuario es responsable de sus acciones y de la información que proporciona. Los conductores deben cumplir con todas las leyes de tránsito y tener sus seguros al día.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">Cálculo de Huella de Carbono</h3>
+                 <p>Las cifras de emisiones de CO₂ son estimaciones con fines informativos y de concienciación, basadas en datos estándar y la información del vehículo proporcionada.</p>
+            </InfoPage>
+        );
+
+        const CookiesPage = () => (
+             <InfoPage title="Política de Cookies de 'viajemos juntos'" cta={false}>
+                <p className="text-sm text-white/60">Última actualización: 07 de Junio, 2024</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">¿Qué son las Cookies?</h3>
+                <p>Son pequeños archivos de texto que los sitios web que visitas colocan en tu dispositivo para almacenar información sobre tu navegación.</p>
+                <h3 className="text-xl font-bold text-white mt-6 mb-3">¿Cómo las Utilizamos?</h3>
+                <p>Usamos cookies para funciones esenciales, mejora del rendimiento, personalización y, ocasionalmente, para publicidad relevante (con tu consentimiento).</p>
+                <ul className="list-disc pl-5 space-y-2 mt-4">
+                    <li><span className="font-semibold">Cookies Esenciales:</span> Para que la plataforma funcione (ej. mantener tu sesión iniciada).</li>
+                    <li><span className="font-semibold">Cookies de Análisis:</span> Para entender cómo se usa la plataforma y mejorarla (ej. Google Analytics).</li>
+                    <li><span className="font-semibold">Cookies de Personalización:</span> Para recordar tus preferencias y adaptar la experiencia.</li>
+                </ul>
+                 <h3 className="text-xl font-bold text-white mt-6 mb-3">¿Cómo Puedes Gestionarlas?</h3>
+                <p>La mayoría de los navegadores te permiten ver, gestionar y eliminar cookies. Ten en cuenta que si bloqueas ciertas cookies, algunas funcionalidades de "viajemos juntos" podrían no operar correctamente.</p>
+            </InfoPage>
+        );
+
+        const HowItWorksPage = () => (
+            <InfoPage title="Así de Fácil es Moverte con 'viajemos juntos'">
+                <div className="grid lg:grid-cols-2 gap-12 items-start">
+                    {/* For Passengers */}
+                    <div className="space-y-6">
+                        <h2 className="text-3xl font-bold text-white flex items-center gap-3"><Users className="w-8 h-8 text-cyan-400" /> Para Pasajeros</h2>
+                        <ol className="relative border-l-2 border-cyan-500/30 space-y-8 pl-8">
+                           {[{title: "Regístrate y Crea tu Perfil", desc: "Descarga la app (o accede desde nuestra web), completa tu perfil y verifica tu identidad. ¡Un perfil completo genera más confianza en la comunidad!"}, {title: "Busca tu Viaje", desc: "Ingresa tu punto de origen, destino y la fecha en la que deseas viajar. Nuestra plataforma te mostrará los viajes disponibles que coinciden con tu ruta."}, {title: "Elige tu Conductor", desc: "Revisa los perfiles de los conductores, las calificaciones de otros usuarios, los detalles del vehículo y la contribución sugerida para los gastos del viaje."}, {title: "Reserva tu Asiento", desc: "Una vez encuentres el viaje ideal, solicita la reserva. Algunos conductores aceptan automáticamente, otros revisan cada solicitud."}, {title: "Confirma y Viaja", desc: "Cuando el conductor acepte, recibirás una confirmación. Coordina los últimos detalles a través de nuestro chat seguro y ¡listo para viajar!"}, {title: "Paga tu Contribución", desc: "La contribución para los gastos del viaje se realiza según lo acordado."}, {title: "Califica tu Experiencia", desc: "Después del viaje, califica al conductor. Tu opinión es vital para mantener una comunidad segura y confiable."}].map((item, i) => (
+                                <li key={i} className="relative">
+                                    <div className="absolute -left-[34px] w-4 h-4 bg-cyan-400 rounded-full mt-1.5 border-4 border-slate-900"></div>
+                                    <h4 className="font-semibold text-lg text-white">{item.title}</h4>
+                                    <p className="text-sm text-white/70">{item.desc}</p>
+                                </li>
+                           ))}
+                        </ol>
+                    </div>
+                    {/* For Drivers */}
+                     <div className="space-y-6">
+                        <h2 className="text-3xl font-bold text-white flex items-center gap-3"><Car className="w-8 h-8 text-purple-400" /> Para Conductores</h2>
+                        <ol className="relative border-l-2 border-purple-500/30 space-y-8 pl-8">
+                           {[{title: "Regístrate y Verifica", desc: "Completa tu perfil, verifica tu identidad y registra los datos de tu vehículo (crucial para la seguridad y el cálculo de la huella de carbono)."}, {title: "Publica tu Viaje", desc: "Indica tu ruta, fecha, hora de salida y el número de asientos disponibles."}, {title: "Establece la Contribución", desc: "Nuestra plataforma te ayudará a calcular una contribución justa para compartir los gastos del viaje (combustible, peajes, etc.)."}, {title: "Gestiona las Solicitudes", desc: "Recibe notificaciones cuando los pasajeros soliciten reservar. Puedes aceptar o rechazar las solicitudes."}, {title: "Comunícate y Viaja", desc: "Utiliza nuestro chat seguro para coordinar los detalles finales con tus pasajeros."}, {title: "Recibe la Contribución", desc: "Los pasajeros realizarán el aporte a los gastos según lo acordado."}, {title: "Califica a tus Pasajeros", desc: "Tu feedback también es importante para la comunidad."}].map((item, i) => (
+                                <li key={i} className="relative">
+                                    <div className="absolute -left-[34px] w-4 h-4 bg-purple-400 rounded-full mt-1.5 border-4 border-slate-900"></div>
+                                    <h4 className="font-semibold text-lg text-white">{item.title}</h4>
+                                    <p className="text-sm text-white/70">{item.desc}</p>
+                                </li>
+                           ))}
+                        </ol>
+                    </div>
+                </div>
+                 <p className="mt-12 text-center text-lg font-semibold">¡Así de simple! "viajemos juntos" te conecta para que tus viajes sean más eficientes y colaborativos.</p>
+            </InfoPage>
+        );
+        const SustainableTravelPage = () => (
+            <InfoPage title="REDUCE TU HUELLA, VIAJE A VIAJE" cta={true}>
+                 <p className="text-center text-white/70 max-w-3xl mx-auto mb-12">Compartir coche es una de las formas más sencillas y efectivas de contribuir a un medio ambiente más sano. En Viajemos Juntos CO, convertimos cada viaje en una oportunidad para marcar la diferencia.</p>
+                <div className="grid md:grid-cols-3 gap-8 text-left">
+                    <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10"><div className="text-4xl font-bold text-emerald-400 mb-4">50%</div><h3 className="text-xl font-semibold text-white mb-2">Menos Emisiones</h3><p className="text-white/60 text-sm">Al compartir un coche, se reduce a la mitad la huella de carbono por persona en ese trayecto.</p></div>
+                    <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10"><div className="text-4xl font-bold text-emerald-400 mb-4">1.6M</div><h3 className="text-xl font-semibold text-white mb-2">Toneladas de CO2 Ahorradas</h3><p className="text-white/60 text-sm">Nuestra comunidad global ha evitado la emisión de millones de toneladas de CO2, ¡equivalente a plantar millones de árboles!</p></div>
+                    <div className="bg-slate-800/40 p-6 rounded-xl border border-white/10"><div className="text-4xl font-bold text-emerald-400 mb-4">Miles</div><h3 className="text-xl font-semibold text-white mb-2">Menos Coches en la Vía</h3><p className="text-white/60 text-sm">Menos tráfico, menos congestión y ciudades más amables. Cada viaje compartido libera espacio en nuestras carreteras.</p></div>
+                </div>
+            </InfoPage>
+        );
+        const SecurityPage = () => (
+            <InfoPage title="Tu Seguridad, Nuestra Prioridad en Cada Viaje" cta={false}>
+                <p className="text-center text-white/70 max-w-3xl mx-auto mb-12">En "viajemos juntos", nos tomamos la seguridad muy en serio. Hemos implementado múltiples medidas y te ofrecemos herramientas para que cada viaje compartido sea una experiencia confiable y tranquila.</p>
+                
+                <h3 className="text-2xl font-bold text-white mt-8 mb-4">Nuestro Compromiso con la Seguridad</h3>
+                <div className="space-y-4">
+                  <p><strong className="text-purple-400">Verificación de Perfiles:</strong> Implementamos procesos para verificar la identidad de nuestros usuarios y promovemos la validación de la documentación del vehículo.</p>
+                  <p><strong className="text-purple-400">Sistema de Calificaciones y Reseñas:</strong> Después de cada viaje, la comunidad se califica mutuamente, construyendo una red de confianza.</p>
+                  <p><strong className="text-purple-400">Comunicación Segura:</strong> Usa nuestro chat interno para coordinar sin compartir tu número personal hasta que sea necesario.</p>
+                  <p><strong className="text-purple-400">Soporte Dedicado:</strong> Nuestro equipo está disponible para ayudarte a gestionar cualquier incidente.</p>
+                </div>
+
+                <h3 className="text-2xl font-bold text-white mt-10 mb-6">Consejos de Seguridad para Todos</h3>
+                <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-slate-800/40 p-4 rounded-lg"><strong>Completa tu Perfil:</strong> Un perfil detallado y verificado inspira más confianza.</div>
+                    <div className="bg-slate-800/40 p-4 rounded-lg"><strong>Revisa Calificaciones:</strong> Tómate un momento para conocer la experiencia de otros con el usuario.</div>
+                    <div className="bg-slate-800/40 p-4 rounded-lg"><strong>Comunícate con Claridad:</strong> Confirma todos los detalles del viaje antes de salir.</div>
+                    <div className="bg-slate-800/40 p-4 rounded-lg"><strong>Confirma la Identidad:</strong> Asegúrate que la persona y el vehículo coinciden con el perfil.</div>
+                    <div className="bg-slate-800/40 p-4 rounded-lg"><strong>Elige Lugares Seguros:</strong> Acuerda puntos de encuentro públicos, bien iluminados y concurridos.</div>
+                    <div className="bg-slate-800/40 p-4 rounded-lg"><strong>Confía en tus Instintos:</strong> Si algo no te parece bien, tienes derecho a cancelar el viaje.</div>
+                </div>
+
+                <div className="mt-12 text-center p-8 bg-slate-800/40 rounded-xl border border-purple-500/30"><h2 className="text-2xl font-bold text-white mb-4">Viaja con Confianza</h2><p className="text-white/70 max-w-2xl mx-auto">Tu colaboración reportando cualquier incidente o comportamiento inadecuado es fundamental para mantener una comunidad segura para todos.</p></div>
+            </InfoPage>
+        );
+        
+        const PublishTripPage = () => {
+          const { navigate } = useApp();
+          const [step, setStep] = useState(1);
+          const [tripDetails, setTripDetails] = useState({
+            origin: '',
+            destination: '',
+            date: '',
+            time: '',
+            seats: 2,
+            price: 50000,
+          });
+
+          const nextStep = () => setStep(s => Math.min(s + 1, 4));
+          const prevStep = () => setStep(s => Math.max(s - 1, 1));
+          
+          const handleChange = (e) => {
+              const { name, value } = e.target;
+              setTripDetails(prev => ({ ...prev, [name]: value }));
+          };
+
+          const progress = (step / 4) * 100;
+
+          const handleSubmit = (e) => {
+              e.preventDefault();
+              alert(`Viaje de ${tripDetails.origin} a ${tripDetails.destination} publicado!`);
+              navigate('search');
+          }
+
+          return (
+            <div className="relative z-10 pt-32 pb-20">
+              <div className="max-w-4xl mx-auto px-4">
+                <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                  <h1 className="text-3xl font-bold text-center text-white mb-8">Publica tu Viaje</h1>
+                  
+                  {/* Progress Bar */}
+                   <div className="my-8">
+                      <div className="relative h-2 bg-slate-700 rounded-full">
+                        <div className="absolute top-0 left-0 h-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500" style={{width: `${progress}%`}}></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-white/50 mt-2">
+                        <span className={step >= 1 ? 'text-purple-400 font-bold' : ''}>Ruta</span>
+                        <span className={step >= 2 ? 'text-purple-400 font-bold' : ''}>Horario</span>
+                        <span className={step >= 3 ? 'text-purple-400 font-bold' : ''}>Detalles</span>
+                        <span className={step >= 4 ? 'text-purple-400 font-bold' : ''}>Revisar</span>
+                      </div>
+                   </div>
+
+                  <form onSubmit={handleSubmit}>
+                    {step === 1 && (
+                      <div className="space-y-6 animate-fade-in">
+                        <h3 className="text-xl font-semibold text-white/90">Paso 1: Define tu ruta</h3>
+                        <div>
+                          <label className="text-sm font-medium text-white/70">Origen</label>
+                          <input list="locations-list" name="origin" value={tripDetails.origin} onChange={handleChange} required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-white/70">Destino</label>
+                          <input list="locations-list" name="destination" value={tripDetails.destination} onChange={handleChange} required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                        </div>
+                        <datalist id="locations-list">
+                            {locations.map(loc => <option key={loc.name} value={loc.name} />)}
+                        </datalist>
+                        <div className="pt-4 flex justify-end">
+                            <ActionButton onClick={nextStep} type="button" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">Siguiente</ActionButton>
+                        </div>
+                      </div>
+                    )}
+                    {step === 2 && (
+                       <div className="space-y-6 animate-fade-in">
+                        <h3 className="text-xl font-semibold text-white/90">Paso 2: Establece el horario</h3>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="text-sm font-medium text-white/70">Fecha de salida</label>
+                                <input type="date" name="date" value={tripDetails.date} onChange={handleChange} required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" style={{colorScheme: 'dark'}}/>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-white/70">Hora de salida</label>
+                                <input type="time" name="time" value={tripDetails.time} onChange={handleChange} required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" style={{colorScheme: 'dark'}}/>
+                            </div>
+                        </div>
+                        <div className="pt-4 flex justify-between">
+                            <ActionButton onClick={prevStep} type="button" className="bg-white/10 backdrop-blur-md border border-white/20 text-white/80 hover:bg-white/20">Anterior</ActionButton>
+                            <ActionButton onClick={nextStep} type="button" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">Siguiente</ActionButton>
+                        </div>
+                      </div>
+                    )}
+                     {step === 3 && (
+                       <div className="space-y-6 animate-fade-in">
+                        <h3 className="text-xl font-semibold text-white/90">Paso 3: Define los detalles del viaje</h3>
+                        <div>
+                           <label className="text-sm font-medium text-white/70">Asientos disponibles: {tripDetails.seats}</label>
+                           <input type="range" name="seats" min="1" max="6" value={tripDetails.seats} onChange={handleChange} className="w-full mt-2 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+                        </div>
+                        <div>
+                           <label className="text-sm font-medium text-white/70">Precio por asiento</label>
+                            <div className="relative mt-1">
+                                <input type="number" name="price" step="1000" value={tripDetails.price} onChange={handleChange} className="w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-white/50">COP</div>
+                            </div>
+                        </div>
+                        <div className="pt-4 flex justify-between">
+                            <ActionButton onClick={prevStep} type="button" className="bg-white/10 backdrop-blur-md border border-white/20 text-white/80 hover:bg-white/20">Anterior</ActionButton>
+                            <ActionButton onClick={nextStep} type="button" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">Siguiente</ActionButton>
+                        </div>
+                      </div>
+                    )}
+                     {step === 4 && (
+                       <div className="space-y-6 animate-fade-in">
+                        <h3 className="text-xl font-semibold text-white/90">Paso 4: Revisa y publica</h3>
+                        <div className="bg-slate-700/30 p-6 rounded-lg space-y-3">
+                            <p className="text-white"><strong>Desde:</strong> {tripDetails.origin || 'No definido'}</p>
+                            <p className="text-white"><strong>Hasta:</strong> {tripDetails.destination || 'No definido'}</p>
+                            <p className="text-white"><strong>Fecha:</strong> {tripDetails.date || 'No definida'}</p>
+                            <p className="text-white"><strong>Hora:</strong> {tripDetails.time || 'No definida'}</p>
+                            <p className="text-white"><strong>Asientos:</strong> {tripDetails.seats}</p>
+                            <p className="text-2xl font-bold text-purple-400 mt-2"><strong>Precio:</strong> {Number(tripDetails.price).toLocaleString('es-CO', { style: 'currency', currency: 'COP' })} / asiento</p>
+                        </div>
+                        <div className="pt-4 flex justify-between">
+                            <ActionButton onClick={prevStep} type="button" className="bg-white/10 backdrop-blur-md border border-white/20 text-white/80 hover:bg-white/20">Anterior</ActionButton>
+                            <ActionButton type="submit" className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">Publicar Viaje</ActionButton>
+                        </div>
+                      </div>
+                    )}
+                  </form>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const CorporateLoginPage = () => {
+            const { loginAsCorp } = useApp();
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                loginAsCorp();
+            }
+
+            return (
+                <div className="relative z-10 pt-32 pb-20 flex items-center justify-center min-h-screen">
+                    <div className="w-full max-w-md mx-auto px-4">
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8">
+                            <div className="text-center mb-8">
+                                <Briefcase className="w-16 h-16 text-teal-400 mx-auto mb-4"/>
+                                <h2 className="text-3xl font-bold text-white mb-2">Portal de Empresas</h2>
+                                <p className="text-white/60">Accede a tus reportes de movilidad sostenible.</p>
+                            </div>
+                            <form className="space-y-4" onSubmit={handleSubmit}>
+                                <div><label className="text-sm font-medium text-white/70">Usuario Empresarial</label><input type="email" name="email" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-teal-500 focus:outline-none transition" defaultValue="sostenibilidad@tuempresa.co" /></div>
+                                <div><label className="text-sm font-medium text-white/70">Contraseña</label><input type="password" name="password" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-teal-500 focus:outline-none transition" defaultValue="password"/></div>
+                                <ActionButton type="submit" className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 text-white mt-4">Ingresar</ActionButton>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const CorporateDashboardPage = () => {
+             const { corpUser, logout, navigate } = useApp();
+             const [activeTab, setActiveTab] = useState('Resumen');
+             const [isModalOpen, setIsModalOpen] = useState(false);
+             const [employees, setEmployees] = useState([
+                { id: 1, name: 'Carlos Mendoza', email: 'c.mendoza@tuempresa.co', trips: 15, co2Saved: 120.5 },
+                { id: 2, name: 'Laura Jiménez', email: 'l.jimenez@tuempresa.co', trips: 12, co2Saved: 95.2 },
+                { id: 3, name: 'Pedro Pascal', email: 'p.pascal@tuempresa.co', trips: 22, co2Saved: 180.1 },
+             ]);
+            
+             const initialTravels = [
+                 {id: 1, dateTime: '2025-06-22T08:00:00', employees: ['Carlos Mendoza'], role: 'Conductor', route: 'Medellín - Rionegro', distance: 45, co2Saved: 2.3, economicSaving: 130000},
+                 {id: 2, dateTime: '2025-06-15T07:30:00', employees: ['Laura Jiménez'], role: 'Pasajero', route: 'Envigado - Sabaneta', distance: 12, co2Saved: 0.8, economicSaving: 15000},
+                 {id: 3, dateTime: '2025-05-21T18:00:00', employees: ['Pedro Pascal'], role: 'Conductor', route: 'Bello - Itagüí', distance: 25, co2Saved: 1.5, economicSaving: 25000},
+                 {id: 4, dateTime: '2025-05-01T09:00:00', employees: ['Carlos Mendoza', 'Laura Jiménez'], role: 'Pasajero', route: 'Rionegro - Medellín', distance: 45, co2Saved: 4.6, economicSaving: 130000},
+                 {id: 5, dateTime: '2025-04-20T17:00:00', employees: ['Ana de Armas'], role: 'Pasajero', route: 'Medellín - Envigado', distance: 15, co2Saved: 0.9, economicSaving: 18000},
+                 {id: 6, dateTime: '2024-07-10T10:00:00', employees: ['Pedro Pascal'], role: 'Conductor', route: 'Sabaneta - Medellín', distance: 18, co2Saved: 1.1, economicSaving: 22000},
+             ];
+
+             const [travels] = useState(initialTravels);
+             const [filterTerm, setFilterTerm] = useState('');
+             const [sortConfig, setSortConfig] = useState({ key: 'dateTime', direction: 'descending' });
+             const [activeRange, setActiveRange] = useState('month');
+             const [dateRange, setDateRange] = useState({
+                start: (() => { const d = new Date(); d.setMonth(d.getMonth() - 1); return d.toISOString().split('T')[0]; })(),
+                end: new Date().toISOString().split('T')[0],
+             });
+
+             if (!corpUser) {
+                useEffect(() => navigate('corporate-login'), []);
+                return null;
+             }
+
+             const setDateRangePreset = (preset) => {
+                const end = new Date();
+                const start = new Date();
+                if (preset === 'month') {
+                    start.setMonth(start.getMonth() - 1);
+                } else if (preset === 'quarter') {
+                    start.setMonth(start.getMonth() - 3);
+                } else if (preset === 'year') {
+                    start.setFullYear(start.getFullYear() - 1);
+                }
+                setActiveRange(preset);
+                setDateRange({
+                    start: start.toISOString().split('T')[0],
+                    end: end.toISOString().split('T')[0],
+                });
+             }
+
+             const handleCustomDateChange = (e, part) => {
+                setActiveRange('custom');
+                setDateRange(prev => ({...prev, [part]: e.target.value}));
+             }
+            
+             const filteredTravelsByDate = useMemo(() => {
+                if (!dateRange.start || !dateRange.end) return travels;
+                const startDate = new Date(dateRange.start);
+                const endDate = new Date(dateRange.end);
+                endDate.setHours(23, 59, 59, 999); 
+
+                return travels.filter(travel => {
+                    const travelDate = new Date(travel.dateTime);
+                    return travelDate >= startDate && travelDate <= endDate;
+                });
+             }, [travels, dateRange]);
+             
+             const kpis = useMemo(() => {
+                return filteredTravelsByDate.reduce((acc, travel) => {
+                    acc.totalCo2Saved += travel.co2Saved;
+                    acc.totalEconomicSaving += travel.economicSaving;
+                    acc.totalDistance += travel.distance;
+                    return acc;
+                }, { totalCo2Saved: 0, totalEconomicSaving: 0, totalDistance: 0, totalTrips: filteredTravelsByDate.length });
+             }, [filteredTravelsByDate]);
+
+             const sortedAndFilteredTravels = useMemo(() => {
+                let filteredTravels = filteredTravelsByDate.filter(travel => 
+                    travel.employees.join(', ').toLowerCase().includes(filterTerm.toLowerCase()) ||
+                    travel.route.toLowerCase().includes(filterTerm.toLowerCase())
+                );
+
+                if (sortConfig.key) {
+                    filteredTravels.sort((a, b) => {
+                        let aValue = a[sortConfig.key];
+                        let bValue = b[sortConfig.key];
+
+                        if (sortConfig.key === 'dateTime') {
+                            aValue = new Date(aValue);
+                            bValue = new Date(bValue);
+                        }
+                        
+                        if (aValue < bValue) {
+                            return sortConfig.direction === 'ascending' ? -1 : 1;
+                        }
+                        if (aValue > bValue) {
+                            return sortConfig.direction === 'ascending' ? 1 : -1;
+                        }
+                        return 0;
+                    });
+                }
+                return filteredTravels;
+             }, [filteredTravelsByDate, filterTerm, sortConfig]);
+
+             const requestSort = (key) => {
+                let direction = 'ascending';
+                if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+                    direction = 'descending';
+                }
+                setSortConfig({ key, direction });
+            };
+
+             const handleAddEmployee = (e) => {
+                 e.preventDefault();
+                 const newEmployee = {
+                     id: employees.length + 1,
+                     name: e.target.name.value,
+                     email: e.target.email.value,
+                     trips: 0,
+                     co2Saved: 0,
+                 };
+                 setEmployees([...employees, newEmployee]);
+                 setIsModalOpen(false);
+             }
+             
+             const renderContent = () => {
+                 switch(activeTab) {
+                     case 'Resumen': return (
+                        <div className="space-y-8">
+                             <div>
+                                <h3 className="text-2xl font-bold text-white mb-4">Métricas de Sostenibilidad</h3>
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10">
+                                        <h4 className="text-lg font-semibold text-white/70">Total CO₂ Ahorrado</h4>
+                                        <p className="text-4xl font-bold text-emerald-400">{kpis.totalCo2Saved.toFixed(1)} kg</p>
+                                    </div>
+                                     <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10">
+                                        <h4 className="text-lg font-semibold text-white/70">Total de Viajes</h4>
+                                        <p className="text-4xl font-bold text-cyan-400">{kpis.totalTrips}</p>
+                                    </div>
+                                     <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10">
+                                        <h4 className="text-lg font-semibold text-white/70">Empleados Activos</h4>
+                                        <p className="text-4xl font-bold text-purple-400">{employees.length}</p>
+                                    </div>
+                                 </div>
+                             </div>
+                             <div>
+                                <h3 className="text-2xl font-bold text-white mb-4">Métricas de Eficiencia y Ahorro Económico</h3>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                     <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10">
+                                        <h4 className="text-lg font-semibold text-white/70">Ahorro Estimado Total</h4>
+                                        <p className="text-4xl font-bold text-teal-400">{kpis.totalEconomicSaving.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</p>
+                                        <p className="text-xs text-white/50">vs. costo estimado en taxi</p>
+                                    </div>
+                                     <div className="bg-slate-800/50 p-6 rounded-xl border border-white/10">
+                                        <h4 className="text-lg font-semibold text-white/70">Total Kilómetros Recorridos</h4>
+                                        <p className="text-4xl font-bold text-indigo-400">{kpis.totalDistance.toLocaleString('es-CO')} km</p>
+                                    </div>
+                                </div>
+                             </div>
+                         </div>
+                     );
+                     case 'Empleados': return (
+                         <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-2xl font-bold text-white">Gestionar Empleados</h2>
+                                <ActionButton onClick={() => setIsModalOpen(true)} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                                    <UserPlus className="w-5 h-5"/> Añadir Empleado
+                                </ActionButton>
+                            </div>
+                            <div className="bg-slate-800/50 rounded-lg overflow-hidden border border-slate-700">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-700/50 text-sm uppercase text-white/60">
+                                        <tr>
+                                            <th className="p-4 font-medium">Nombre</th>
+                                            <th className="p-4 font-medium">Email</th>
+                                            <th className="p-4 font-medium">Viajes</th>
+                                            <th className="p-4 font-medium">CO₂ Ahorrado (kg)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-sm">
+                                        {employees.map(emp => (
+                                            <tr key={emp.id} className="border-b border-slate-700 last:border-0 hover:bg-slate-800/40 transition-colors">
+                                                <td className="p-4">{emp.name}</td>
+                                                <td>{emp.email}</td>
+                                                <td>{emp.trips}</td>
+                                                <td>{emp.co2Saved}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                         </div>
+                     );
+                    case 'Historial de Viajes':
+                        const SortableHeader = ({ children, columnKey }) => {
+                            const isSorted = sortConfig.key === columnKey;
+                            return (
+                                <th className="p-4 font-medium cursor-pointer hover:bg-slate-700/80 transition-colors" onClick={() => requestSort(columnKey)}>
+                                    <div className="flex items-center gap-2">
+                                        {children}
+                                        {isSorted && <span className={`transition-transform duration-200 ${sortConfig.direction === 'ascending' ? 'rotate-180' : ''}`}><ChevronDown className="w-4 h-4"/></span>}
+                                    </div>
+                                </th>
+                            );
+                        };
+
+                        return (
+                            <div>
+                                <h2 className="text-2xl font-bold text-white mb-4">Historial Detallado de Viajes</h2>
+                                <div className="mb-6">
+                                    <input
+                                        type="text"
+                                        placeholder="Filtrar por empleado o ruta..."
+                                        value={filterTerm}
+                                        onChange={(e) => setFilterTerm(e.target.value)}
+                                        className="w-full max-w-sm bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-4 focus:ring-2 focus:ring-teal-500 focus:outline-none transition"
+                                    />
+                                </div>
+                                <div className="bg-slate-800/50 rounded-lg overflow-x-auto border border-slate-700">
+                                    <table className="w-full text-left min-w-[1000px]">
+                                        <thead className="bg-slate-700/50 text-sm uppercase text-white/60">
+                                            <tr>
+                                                <SortableHeader columnKey="dateTime">Fecha y Hora</SortableHeader>
+                                                <th className="p-4 font-medium">Empleado(s)</th>
+                                                <SortableHeader columnKey="role">Rol</SortableHeader>
+                                                <SortableHeader columnKey="route">Ruta</SortableHeader>
+                                                <SortableHeader columnKey="distance">Distancia (km)</SortableHeader>
+                                                <SortableHeader columnKey="co2Saved">CO₂ Ahorrado (kg)</SortableHeader>
+                                                <SortableHeader columnKey="economicSaving">Ahorro vs. Taxi</SortableHeader>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="text-sm">
+                                            {sortedAndFilteredTravels.map(t => (
+                                                <tr key={t.id} className="border-b border-slate-700 last:border-0 hover:bg-slate-800/40 transition-colors">
+                                                    <td className="p-4 whitespace-nowrap">{new Date(t.dateTime).toLocaleString('es-CO', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                                    <td className="p-4">{t.employees.join(', ')}</td>
+                                                    <td className="p-4">
+                                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${t.role === 'Conductor' ? 'bg-blue-500/20 text-blue-300' : 'bg-teal-500/20 text-teal-300'}`}>{t.role}</span>
+                                                    </td>
+                                                    <td className="p-4">{t.route}</td>
+                                                    <td className="p-4">{t.distance}</td>
+                                                    <td className="p-4 font-semibold text-emerald-400">{t.co2Saved}</td>
+                                                    <td className="p-4 font-semibold text-purple-400">{t.economicSaving.toLocaleString('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 })}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {sortedAndFilteredTravels.length === 0 && (
+                                    <p className="text-center p-8 text-white/60">No se encontraron viajes que coincidan con el filtro.</p>
+                                )}
+                            </div>
+                        );
+                     case 'Configuración': return (
+                          <div>
+                            <h2 className="text-2xl font-bold text-white mb-4">Configuración de la Cuenta</h2>
+                            <form className="space-y-4 max-w-lg">
+                                 <div><label className="text-sm font-medium text-white/70">Nombre de la Empresa</label><input type="text" defaultValue={corpUser.name} className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-teal-500 focus:outline-none transition" /></div>
+                                 <div><label className="text-sm font-medium text-white/70">Correo de Contacto</label><input type="email" defaultValue={corpUser.email} className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-teal-500 focus:outline-none transition" /></div>
+                                 <ActionButton type="submit" className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white">Guardar Cambios</ActionButton>
+                            </form>
+                         </div>
+                     );
+                     default: return null;
+                 }
+             }
+
+             return (
+                 <div className="relative z-10 pt-32 pb-20">
+                     <div className="max-w-7xl mx-auto px-4">
+                         <div className="flex justify-between items-start mb-8">
+                             <div>
+                                 <h1 className="text-3xl font-bold text-white">Dashboard Corporativo</h1>
+                                 <p className="text-white/60">{corpUser.name}</p>
+                             </div>
+                             <button onClick={logout} className="flex items-center gap-2 bg-red-500/20 text-red-400 font-semibold py-2 px-4 rounded-lg hover:bg-red-500/30 transition-all">
+                                <Logout className="w-4 h-4" /> Salir
+                            </button>
+                         </div>
+                         
+                         <div className="bg-slate-800/30 backdrop-blur-md border border-slate-700 rounded-xl p-4 mb-8">
+                             <div className="flex flex-wrap items-center gap-4">
+                                 <span className="text-white/80 font-semibold">Filtrar por fecha:</span>
+                                 <div className="flex items-center gap-2">
+                                     <button onClick={() => setDateRangePreset('month')} className={`px-3 py-1 text-sm rounded-md transition-colors ${activeRange === 'month' ? 'bg-teal-500 text-white' : 'bg-slate-700 hover:bg-slate-600'}`}>Último Mes</button>
+                                     <button onClick={() => setDateRangePreset('quarter')} className={`px-3 py-1 text-sm rounded-md transition-colors ${activeRange === 'quarter' ? 'bg-teal-500 text-white' : 'bg-slate-700 hover:bg-slate-600'}`}>Último Trimestre</button>
+                                     <button onClick={() => setDateRangePreset('year')} className={`px-3 py-1 text-sm rounded-md transition-colors ${activeRange === 'year' ? 'bg-teal-500 text-white' : 'bg-slate-700 hover:bg-slate-600'}`}>Último Año</button>
+                                 </div>
+                                 <div className="flex items-center gap-2 text-sm">
+                                     <input type="date" value={dateRange.start} onChange={(e) => handleCustomDateChange(e, 'start')} className="bg-slate-700 border border-slate-600 rounded-md px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:outline-none" style={{colorScheme: 'dark'}}/>
+                                     <span>-</span>
+                                     <input type="date" value={dateRange.end} onChange={(e) => handleCustomDateChange(e, 'end')} className="bg-slate-700 border border-slate-600 rounded-md px-2 py-1 focus:ring-2 focus:ring-teal-500 focus:outline-none" style={{colorScheme: 'dark'}}/>
+                                 </div>
+                             </div>
+                         </div>
+
+                         <div className="flex border-b border-slate-700 mb-8 overflow-x-auto">
+                            {['Resumen', 'Historial de Viajes', 'Empleados', 'Configuración'].map(tab => (
+                                <button key={tab} onClick={() => setActiveTab(tab)} className={`py-3 px-4 text-sm font-medium transition-colors whitespace-nowrap ${activeTab === tab ? 'border-b-2 border-teal-400 text-teal-400' : 'text-white/60 hover:text-white'}`}>{tab}</button>
+                            ))}
+                         </div>
+
+                        <div className="mt-8">
+                          {renderContent()}
+                        </div>
+                     </div>
+                     {isModalOpen && (
+                         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                             <div className="bg-slate-800 border border-white/10 rounded-2xl shadow-2xl p-8 w-full max-w-md m-4 relative">
+                                <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 text-white/50 hover:text-white">
+                                    <X className="w-6 h-6" />
+                                </button>
+                                <h2 className="text-2xl font-bold text-white mb-6">Añadir Nuevo Empleado</h2>
+                                <form onSubmit={handleAddEmployee} className="space-y-4">
+                                    <div>
+                                        <label className="text-sm font-medium text-white/70">Nombre Completo</label>
+                                        <input name="name" type="text" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                    </div>
+                                     <div>
+                                        <label className="text-sm font-medium text-white/70">Correo Electrónico</label>
+                                        <input name="email" type="email" required className="mt-1 w-full bg-slate-700/50 border border-slate-600 rounded-lg py-2 px-3 focus:ring-2 focus:ring-purple-500 focus:outline-none transition" />
+                                    </div>
+                                    <div className="pt-4">
+                                       <ActionButton type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">Registrar Empleado</ActionButton>
+                                    </div>
+                                </form>
+                            </div>
+                         </div>
+                     )}
+                 </div>
+             )
+        }
+
+        // --- Componente Principal de la App ---
+        const App = () => {
+            const { page } = useApp();
+
+            const renderPage = () => {
+                switch (page) {
+                    case 'home': return <HomePage />;
+                    case 'login': return <LoginPage />;
+                    case 'register': return <RegisterPage />;
+                    case 'passenger-register': return <PassengerRegisterPage />;
+                    case 'driver-register': return <DriverRegisterPage />;
+                    case 'passenger-profile': return <PassengerProfilePage />;
+                    case 'driver-profile': return <DriverProfilePage />;
+                    case 'search': return <SearchPage />;
+                    case 'tripDetails': return <TripDetailsPage />;
+                    case 'publish-trip': return <PublishTripPage />;
+                    case 'how-it-works': return <HowItWorksPage />;
+                    case 'sustainable-travel': return <SustainableTravelPage />;
+                    case 'security': return <SecurityPage />;
+                    case 'about-us': return <AboutUsPage />;
+                    case 'mission': return <MissionPage />;
+                    case 'blog': return <BlogPage />;
+                    case 'faq': return <FaqPage />;
+                    case 'help-center': return <HelpCenterPage />;
+                    case 'contact': return <ContactPage />;
+                    case 'terms': return <TermsPage />;
+                    case 'privacy': return <PrivacyPage />;
+                    case 'legal': return <LegalNoticePage />;
+                    case 'cookies': return <CookiesPage />;
+                    case 'corporate-login': return <CorporateLoginPage />;
+                    case 'corporate-dashboard': return <CorporateDashboardPage />;
+                    default: return <HomePage />;
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <AnimatedBackground />
+                    <AppHeader />
+                    <main className="flex-grow">
+                        <div className="relative">
+                            {renderPage()}
+                        </div>
+                    </main>
+                    <AppFooter />
+                </div>
+            );
+        };
+
+        const Root = () => (
+            <AppProvider>
+                <App />
+            </AppProvider>
+        );
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+    </script>
+</body>
+</html>
