@@ -1,31 +1,41 @@
 {
-  "name": "@babel/helpers",
-  "version": "7.27.6",
-  "description": "Collection of helper functions used by Babel transforms.",
-  "author": "The Babel Team (https://babel.dev/team)",
-  "homepage": "https://babel.dev/docs/en/next/babel-helpers",
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/babel/babel.git",
-    "directory": "packages/babel-helpers"
-  },
-  "main": "./lib/index.js",
-  "dependencies": {
-    "@babel/template": "^7.27.2",
-    "@babel/types": "^7.27.6"
-  },
-  "devDependencies": {
-    "@babel/generator": "^7.27.5",
-    "@babel/helper-plugin-test-runner": "^7.27.1",
-    "@babel/parser": "^7.27.5",
-    "regenerator-runtime": "^0.14.0"
-  },
-  "engines": {
-    "node": ">=6.9.0"
-  },
-  "type": "commonjs"
+	"name": "globals",
+	"version": "11.12.0",
+	"description": "Global identifiers from different JavaScript environments",
+	"license": "MIT",
+	"repository": "sindresorhus/globals",
+	"author": {
+		"name": "Sindre Sorhus",
+		"email": "sindresorhus@gmail.com",
+		"url": "sindresorhus.com"
+	},
+	"engines": {
+		"node": ">=4"
+	},
+	"scripts": {
+		"test": "xo && ava"
+	},
+	"files": [
+		"index.js",
+		"globals.json"
+	],
+	"keywords": [
+		"globals",
+		"global",
+		"identifiers",
+		"variables",
+		"vars",
+		"jshint",
+		"eslint",
+		"environments"
+	],
+	"devDependencies": {
+		"ava": "0.21.0",
+		"xo": "0.18.0"
+	},
+	"xo": {
+		"ignores": [
+			"get-browser-globals.js"
+		]
+	}
 }
