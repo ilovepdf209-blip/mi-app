@@ -1,0 +1,130 @@
+{
+  "hash": "3a1ac420",
+  "configHash": "57bdaeb1",
+  "lockfileHash": "00d42dbb",
+  "browserHash": "12d570b3",
+  "optimized": {
+    "react": {
+      "src": "../../react/index.js",
+      "file": "react.js",
+      "fileHash": "6e32c6a3",
+      "needsInterop": true
+    },
+    "react-dom": {
+      "src": "../../react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "4478d730",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "966c34b6",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "de64b06c",
+      "needsInterop": true
+    },
+    "chart.js/auto": {
+      "src": "../../chart.js/auto/auto.js",
+      "file": "chart__js_auto.js",
+      "fileHash": "70dff2b4",
+      "needsInterop": false
+    },
+    "firebase/app": {
+      "src": "../../firebase/app/dist/esm/index.esm.js",
+      "file": "firebase_app.js",
+      "fileHash": "dadaae9c",
+      "needsInterop": false
+    },
+    "firebase/auth": {
+      "src": "../../firebase/auth/dist/esm/index.esm.js",
+      "file": "firebase_auth.js",
+      "fileHash": "2cd2e544",
+      "needsInterop": false
+    },
+    "firebase/firestore": {
+      "src": "../../firebase/firestore/dist/esm/index.esm.js",
+      "file": "firebase_firestore.js",
+      "fileHash": "f860ea18",
+      "needsInterop": false
+    },
+    "firebase/storage": {
+      "src": "../../firebase/storage/dist/esm/index.esm.js",
+      "file": "firebase_storage.js",
+      "fileHash": "2c38ccbc",
+      "needsInterop": false
+    },
+    "gsap": {
+      "src": "../../gsap/index.js",
+      "file": "gsap.js",
+      "fileHash": "7a774c39",
+      "needsInterop": false
+    },
+    "lucide-react": {
+      "src": "../../lucide-react/dist/esm/lucide-react.js",
+      "file": "lucide-react.js",
+      "fileHash": "10e23453",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "67d897d5",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "c30f2df2",
+      "needsInterop": false
+    },
+    "swiper/modules": {
+      "src": "../../swiper/modules/index.mjs",
+      "file": "swiper_modules.js",
+      "fileHash": "3339ee66",
+      "needsInterop": false
+    },
+    "swiper/react": {
+      "src": "../../swiper/swiper-react.mjs",
+      "file": "swiper_react.js",
+      "fileHash": "5cc0209c",
+      "needsInterop": false
+    },
+    "date-fns": {
+      "src": "../../date-fns/index.js",
+      "file": "date-fns.js",
+      "fileHash": "8b7fbc6f",
+      "needsInterop": false
+    },
+    "date-fns/locale": {
+      "src": "../../date-fns/locale.js",
+      "file": "date-fns_locale.js",
+      "fileHash": "796e88f4",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-HE4GKDYE": {
+      "file": "chunk-HE4GKDYE.js"
+    },
+    "chunk-KY4OSI3V": {
+      "file": "chunk-KY4OSI3V.js"
+    },
+    "chunk-57SDOAMY": {
+      "file": "chunk-57SDOAMY.js"
+    },
+    "chunk-UGC3UZ7L": {
+      "file": "chunk-UGC3UZ7L.js"
+    },
+    "chunk-DQEN5ASN": {
+      "file": "chunk-DQEN5ASN.js"
+    },
+    "chunk-G3PMV62Z": {
+      "file": "chunk-G3PMV62Z.js"
+    }
+  }
+}
